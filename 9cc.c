@@ -39,6 +39,8 @@ struct Token {
 	char *str;
 };
 
+char *user_input;
+
 Token *token;
 
 Node *primary();
@@ -51,6 +53,19 @@ void error(char *fmt, ...) {
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	exit(1);
+}
+
+// Reports an error location and exit.
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  int pos = loc - user_input;
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, ""); // print pos spaces.
+  fprintf(stderr, "^ ");
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 // Create a new node
@@ -86,7 +101,7 @@ bool consume(char op) {
 // Otherwise, it returns an error.
 void expect(char op) {
 	if (token->kind != TK_RESERVED || token->str[0] != op) {
-		error("Not '%c'", op);
+		error_at(token->str, "expected '%c'", op);
 	}
 	token = token->next;
 }
@@ -95,7 +110,7 @@ void expect(char op) {
 // Otherwise, it returns an error.
 int expect_number() {
 	if (token->kind != TK_NUM) {
-		error("Not a number");
+		error_at(token->str, "expected_numner");
 	}
 	int val = token->val;
 	token = token->next;
@@ -202,7 +217,7 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-		if (*p == '+' || *p == '-') {
+		if (strchr("+-*/()", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
@@ -213,7 +228,7 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-		error("Cannot tokenize");
+    error_at(p, "Invalid token");
 	}
 
 	new_token(TK_EOF, cur, p);
@@ -226,24 +241,21 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	token = tokenize(argv[1]);
+  // Tokenize
+  user_input = argv[1];
+	token = tokenize(user_input);
+
+  // Create AST
+  Node *node = expr();
 
 	printf(".intel_syntax noprefix\n");
 	printf(".global main\n");
 	printf("main:\n");
 
-	printf("  mov rax, %d\n", expect_number());
+  // Generate assembly code for the AST
+  gen(node);
 
-	while (!at_eof()) {
-		if(consume('+')) { 
-			printf("  add rax, %d\n", expect_number());
-			continue;
-		}
-
-		expect('-');
-		printf("  sub rax, %d\n", expect_number());
-	}
-
+  printf("  pop rax\n");
 	printf("  ret\n");
 	return 0;
 }
