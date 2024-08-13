@@ -1,11 +1,22 @@
 CFLAGS=-std=c11 -g -static
 
-9cc: 9cc.c
+TARGET = 9cc
 
-test: 9cc
+SRCS = 9cc.c tokenizer.c utils.c
+
+OBJS = $(SRCS:.c=.o)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
+
+9cc.o: 9cc.c tokenizer.h utils.h
+tokenizer.o: tokenizer.c tokenizer.h utils.h
+utils.o: utils.c utils.h
+
+test: $(TARGET)
 	./test.sh
 
 clean:
-	rm -f 9cc *.0 *~ tmp*
+	rm -f $(TARGET) *.o *~ tmp*
 
 .PHONY: test clean
