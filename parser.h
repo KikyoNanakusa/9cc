@@ -23,5 +23,6 @@ struct Node {
 Node *expr();
 Node *mul();
 Node *primary();
+Node *unary();
 
 #endif // PARSER_H
