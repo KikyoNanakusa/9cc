@@ -8,6 +8,10 @@ typedef enum {
   ND_MUL,
   ND_DIV,
   ND_NUM,
+  ND_EQ,
+  ND_NE,
+  ND_LT,
+  ND_LE,
 } NodeKind;
 
 typedef struct Node Node;
@@ -21,8 +25,11 @@ struct Node {
 };
 
 Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
-Node *primary();
 Node *unary();
+Node *primary();
 
 #endif // PARSER_H

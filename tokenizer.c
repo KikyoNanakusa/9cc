@@ -33,7 +33,7 @@ Token *tokenize(char *p) {
 		}
 
     if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") || startswith(p, ">=")) {
-      cur = new_token(TK_RESEREVED, cur, p, 2);
+      cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
       continue;
     }
@@ -63,7 +63,7 @@ Token *tokenize(char *p) {
 bool consume(char *op) {
 	if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
-      memcmp(token->str, op, token->len) 
+      memcmp(token->str, op, token->len))
   {
 		return false;
 	}
@@ -76,7 +76,7 @@ bool consume(char *op) {
 void expect(char *op) {
 	if (token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
-      memcmp(token->str, op, token->len)) 
+      memcmp(token->str, op, token->len))
   {
 		error_at(token->str, "expected '%c'", op);
 	}
