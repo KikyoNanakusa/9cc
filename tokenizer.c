@@ -47,8 +47,11 @@ Token *tokenize(char *p) {
 
 // If the next token is the expected symbol, read one token and return true.
 // Otherwise, return false.
-bool consume(char op) {
-	if (token->kind != TK_RESERVED || token->str[0] != op) {
+bool consume(char *op) {
+	if (token->kind != TK_RESERVED ||
+      strlen(op) != token->len ||
+      memcmp(token->str, op, token->len) 
+  {
 		return false;
 	}
 	token = token->next;
@@ -57,8 +60,11 @@ bool consume(char op) {
 
 // If the next token is the expected symbol, read one token.
 // Otherwise, it returns an error.
-void expect(char op) {
-	if (token->kind != TK_RESERVED || token->str[0] != op) {
+void expect(char *op) {
+	if (token->kind != TK_RESERVED ||
+      strlen(op) != token->len ||
+      memcmp(token->str, op, token->len)) 
+  {
 		error_at(token->str, "expected '%c'", op);
 	}
 	token = token->next;
