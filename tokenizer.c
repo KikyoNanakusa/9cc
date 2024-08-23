@@ -38,11 +38,16 @@ Token *tokenize(char *p) {
       continue;
     }
 
-		if (strchr("+-*/()<>", *p)) {
+		if (strchr("+-*/=;()<>", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
 
+    if ('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
+      continue;
+    }
+    
 		if (isdigit(*p)) {
 			cur = new_token(TK_NUM, cur, p, 0);
       char *q = p;
@@ -69,6 +74,16 @@ bool consume(char *op) {
 	}
 	token = token->next;
 	return true;
+}
+
+Token *consume_ident() {
+  if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
 }
 
 // If the next token is the expected symbol, read one token.

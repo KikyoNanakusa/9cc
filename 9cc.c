@@ -25,15 +25,24 @@ int main(int argc, char **argv) {
 	token = tokenize(user_input);
 
   // Create AST
-  Node *node = expr();
+  program();
 
 	printf(".intel_syntax noprefix\n");
 	printf(".global main\n");
 	printf("main:\n");
 
-  // Generate assembly code for the AST
-  gen(node);
+  // prologue
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, 208\n");
 
+  // Generate assembly code for the AST
+  for(int i = 0; code[i]; i++) {
+    gen(code[i]);
+    printf("  pop rax\n");
+  }
+
+  printf("  mov rsp, rbp\n");
   printf("  pop rax\n");
 	printf("  ret\n");
 	return 0;
