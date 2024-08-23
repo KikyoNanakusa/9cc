@@ -19,6 +19,14 @@ bool startswith(char *p, char *q) {
   return memcmp(p, q, strlen(q)) == 0;
 }
 
+bool is_alpha(char c) {
+  return ('a' <= c && c <='z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+bool is_alpha_num(char c) {
+  reuturn is_alpha(c) || ('0' <= c && c <= '9');
+}
+
 // Tokenize the input p and return it.
 Token *tokenize(char *p) {
 	Token head;
@@ -43,8 +51,12 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-    if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+    if (is_alpha(*p)) {
+      char *q = p;
+      while (is_alpha_num(*p)) {
+        p++;
+      }
+      cur = new_token(TK_IDENT, cur, q, p - q);
       continue;
     }
     
