@@ -3,7 +3,7 @@
 
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR) {
-    error("Left values is no a variable");
+    error("Left values is not a variable");
   }
 
   printf("  mov rax, rbp\n");
@@ -13,6 +13,15 @@ void gen_lval(Node *node) {
 
 // Generate assembly code
 void gen(Node *node) {
+  if (node->kind == ND_RETURN) {
+    gen(node->lhs);
+    printf("  pop rax\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+    return;
+  }
+
   switch (node->kind) {
     case ND_NUM:
       printf("  push %d\n", node->val);
@@ -26,6 +35,12 @@ void gen(Node *node) {
     case ND_ASSIGN:
       gen_lval(node->lhs);
       gen(node->rhs);
+
+      printf("  pop rdi\n");
+      printf("  pop rax\n");
+      printf("  mov [rax], rdi\n");
+      printf("  push rdi\n");
+      return;
   }
 
   gen(node->lhs);

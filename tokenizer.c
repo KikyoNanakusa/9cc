@@ -24,7 +24,7 @@ bool is_alpha(char c) {
 }
 
 bool is_alpha_num(char c) {
-  reuturn is_alpha(c) || ('0' <= c && c <= '9');
+  return is_alpha(c) || ('0' <= c && c <= '9');
 }
 
 // Tokenize the input p and return it.
@@ -39,6 +39,13 @@ Token *tokenize(char *p) {
 			p++;
 			continue;
 		}
+
+    // tokenize return
+    if(startswith(p, "return") && !is_alpha_num(p[6])) {
+      cur = new_token(TK_RETURN, cur, p, 6);
+      p += 6;
+      continue;
+    }
 
     if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") || startswith(p, ">=")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
@@ -86,6 +93,16 @@ bool consume(char *op) {
 	}
 	token = token->next;
 	return true;
+}
+
+Token *consume_return() {
+  if (token->kind != TK_RETURN) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
 }
 
 Token *consume_ident() {
