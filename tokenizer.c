@@ -19,6 +19,14 @@ bool startswith(char *p, char *q) {
   return memcmp(p, q, strlen(q)) == 0;
 }
 
+bool is_alpha(char c) {
+  return ('a' <= c && c <='z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+bool is_alpha_num(char c) {
+  return is_alpha(c) || ('0' <= c && c <= '9');
+}
+
 // Tokenize the input p and return it.
 Token *tokenize(char *p) {
 	Token head;
@@ -32,17 +40,33 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
+    // tokenize return
+    if(startswith(p, "return") && !is_alpha_num(p[6])) {
+      cur = new_token(TK_RETURN, cur, p, 6);
+      p += 6;
+      continue;
+    }
+
     if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") || startswith(p, ">=")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
       continue;
     }
 
-		if (strchr("+-*/()<>", *p)) {
+		if (strchr("+-*/=;()<>", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
 
+    if (is_alpha(*p)) {
+      char *q = p;
+      while (is_alpha_num(*p)) {
+        p++;
+      }
+      cur = new_token(TK_IDENT, cur, q, p - q);
+      continue;
+    }
+    
 		if (isdigit(*p)) {
 			cur = new_token(TK_NUM, cur, p, 0);
       char *q = p;
@@ -69,6 +93,26 @@ bool consume(char *op) {
 	}
 	token = token->next;
 	return true;
+}
+
+Token *consume_return() {
+  if (token->kind != TK_RETURN) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
+}
+
+Token *consume_ident() {
+  if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
 }
 
 // If the next token is the expected symbol, read one token.
