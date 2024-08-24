@@ -60,13 +60,33 @@ Node *stmt() {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
-  } else {
-    node = expr();
+
+    if (!consume(";")) {
+      error("';' is expected");
+    }
+    return node;
   }
     
+  if (consume("if")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if (consume("else")) {
+      node->els = stmt();
+    }
+    return node;
+  }
+
+  node = expr();
+
   if (!consume(";")) {
     error("';' is expected");
   }
+   
   return node;
 }
 
