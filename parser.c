@@ -123,6 +123,22 @@ Node *stmt() {
     return node;
   }
 
+  if (consume("{")) {
+    Node head;
+    head.next = NULL;
+    Node *cur = &head;
+
+    while(!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->body = head.next;
+    return node;
+  }
+
   node = expr();
 
   if (!consume(";")) {
