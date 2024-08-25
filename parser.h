@@ -20,10 +20,11 @@ typedef enum {
   ND_IF,
   ND_WHILE,
   ND_FOR,
+  ND_BLOCK,
 } NodeKind;
 
-typedef struct Node Node;
 
+typedef struct Node Node;
 extern Node *code[100];
 
 // Node type of AST
@@ -41,7 +42,10 @@ struct Node {
               //
   Node *init; // user only if kind is ND_FOR
   Node *inc;  // user only if kind is ND_FOR
+              //
+  Node *body; // used only if kind is ND_BLOCK
 };
+
 
 // Local variable
 typedef struct LVar LVar;
