@@ -93,6 +93,36 @@ Node *stmt() {
     return node;
   }
 
+  if (consume("for")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+
+    expect("(");
+    if(!consume(";")) {
+      node->init = expr();
+      expect(";");
+    } else {
+      node->init = NULL;
+    }
+
+    if (!consume(";")) {
+      node->cond = expr(); 
+      expect(";");
+    } else {
+      node->cond = NULL;
+    }
+
+    if (!consume(")")) {
+      node->inc = expr();
+      expect(")");
+    } else {
+      node->inc = NULL;
+    }
+    
+    node->then = stmt();
+    return node;
+  }
+
   node = expr();
 
   if (!consume(";")) {
