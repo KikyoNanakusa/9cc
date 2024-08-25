@@ -16,6 +16,8 @@ assert() {
   fi
 }
 
+assert 10 'i=0; while(i<10) i=i+1; return i;'
+
 assert 0 'return 0;'
 assert 42 'return 42;'
 assert 21 'return 5+20-4;'
@@ -61,4 +63,5 @@ assert 2 'if (0<=1) return 2; return 3;'
 assert 3 'if (43!=43) return 2; return 3;'
 assert 2 'foo=1; if (foo) return 2; return 3;'
 assert 3 'bar=0; if (bar) return 2; return 3;'
+
 echo OK

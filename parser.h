@@ -18,6 +18,7 @@ typedef enum {
   ND_LVAR,
   ND_RETURN,
   ND_IF,
+  ND_WHILE,
 } NodeKind;
 
 typedef struct Node Node;
@@ -33,9 +34,9 @@ struct Node {
   int val;    // val is used only if only kind is ND_NUM
   int offset; // offset is used only if kind is ND_LVAR
               //
-  Node *cond;
-  Node *then;
-  Node *els;
+  Node *cond; // used only if kind is ND_IF or ND_WH
+  Node *then; // used only if kind is ND_IF or ND_WH
+  Node *els;  // used only if kind is ND_IF
 };
 
 // Local variable
