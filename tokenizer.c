@@ -47,6 +47,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if (startswith(p, "while")) {
+      cur = new_token(TK_RESERVED, cur, p, 5);
+      p += 5;
+      continue;
+    }
+
     if(startswith(p, "if")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
