@@ -81,10 +81,10 @@ void gen(Node *node) {
       printf(".Lbegin%d:\n", seq);
       if (node->cond) {
         gen(node->cond);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je .Lend%d\n", seq);
       }
-      printf("  pop rax\n");
-      printf("  cmp rax, 0\n");
-      printf("  je .Lend%d\n", seq);
       gen(node->then);
       if (node->inc) {
         gen(node->inc);
@@ -96,6 +96,10 @@ void gen(Node *node) {
       for (Node *n = node->body; n; n = n->next) {
         gen(n);
       }
+      return;
+    case ND_FUNCALL:
+      printf("  call %s\n", node->funcname);
+      printf("  push rax\n");
       return;
   }
 

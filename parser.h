@@ -1,7 +1,16 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+#include "tokenizer.h"
+#include "utils.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <strings.h>
+#include <stddef.h>
+
+char *strndup(const char *s, size_t n);
+size_t strnlen(const char *s, size_t maxlen);
 
 // Node type of AST
 typedef enum {
@@ -21,6 +30,7 @@ typedef enum {
   ND_WHILE,
   ND_FOR,
   ND_BLOCK,
+  ND_FUNCALL,
 } NodeKind;
 
 
@@ -44,6 +54,8 @@ struct Node {
   Node *inc;  // user only if kind is ND_FOR
               //
   Node *body; // used only if kind is ND_BLOCK
+              //
+  char *funcname; // used only if kind is ND_FUNCALL
 };
 
 

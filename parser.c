@@ -1,13 +1,25 @@
 #include "parser.h"
-#include "tokenizer.h"
-#include "utils.h"
-#include <stdio.h>
-#include <stdlib.h>
-
 
 // global variables
 Node *code[100];
 LVar *locals = NULL;
+
+size_t strnlen(const char *s, size_t maxlen) {
+    size_t len = 0;
+    while (len < maxlen && s[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+
+char *strndup(const char *s, size_t n) {
+    char *result;
+    size_t len = strnlen(s, n);
+    result = (char *)malloc(len + 1);
+    if (!result) return NULL;
+    result[len] = '\0';
+    return (char *)memcpy(result, s, len);
+}
 
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
@@ -215,6 +227,16 @@ Node *primary() {
   Token *tok = consume_ident();
   if (tok) {
     Node *node = calloc(1, sizeof(Node));
+    
+    // if the token is a no argument function call
+    if (consume("(")) {
+      expect(")");
+      node->kind = ND_FUNCALL;
+      node->funcname = strndup(tok->str, tok->len);
+      return node;
+    }
+
+
     node->kind = ND_LVAR;
 
     LVar *lvar = find_lvar(tok);
