@@ -29,6 +29,8 @@ typedef enum {
   ND_FOR,
   ND_BLOCK,
   ND_FUNCALL,
+  ND_ADDR,
+  ND_DEREF,
 } NodeKind;
 
 
