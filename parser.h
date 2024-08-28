@@ -38,7 +38,6 @@ typedef struct Node Node;
 typedef struct LVar LVar;
 struct LVar {
   char *name;
-  int len;
   int offset; // offset from rbp
 };
 
@@ -77,8 +76,8 @@ struct Function  {
   Function *next;
   LVarList *locals;
   int stack_size;
+  LVarList *params;
 };
-
 
 Function *program();
 Function *function();

@@ -26,7 +26,7 @@ Node *new_node_num(int val) {
 LVar *find_lvar(Token *tok) {
   for (LVarList *varList = locals; varList; varList = varList->next) {
     LVar *var = varList->var;
-    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
+    if (strlen(var->name) == tok->len && !memcmp(tok->str, var->name, tok->len)) {
       return var;
     }
   }
@@ -34,10 +34,9 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
-LVar *push_lvar(Token *tok) {
+LVar *push_lvar(char *name) {
   LVar *var = calloc(1, sizeof(LVar));
-  var->name = tok->str;
-  var->len = tok->len;
+  var->name = name;
 
   LVarList *varList = calloc(1, sizeof(LVarList));
   varList->var = var;
@@ -156,13 +155,46 @@ Node *stmt() {
   return node;
 }
 
+Function *program() {
+  Function head;
+  head.next = NULL;
+  Function *cur = &head;
+
+  while (!at_eof()) {
+    cur->next = function();
+    cur = cur->next;
+  }
+  
+  return head.next;
+}
+
+LVarList *read_func_params() {
+  if (consume(")")) {
+    return NULL;
+  }
+
+  LVarList *head = calloc(1, sizeof(LVarList));
+  head->var = push_lvar(expect_ident());
+  LVarList *cur = head;
+
+  while(consume(")")) {
+    expect(",");
+    LVarList *param = calloc(1, sizeof(LVarList));
+    param->var = push_lvar(expect_ident());
+    cur->next = param;
+    cur = cur->next;
+  }
+
+  return head;
+}
+
 Function *function() {
   locals = NULL;
 
   Function *fn = calloc(1, sizeof(Function));
   fn->name = expect_ident();
   expect("(");
-  expect(")");
+  fn->params = read_func_params();
   expect("{");
 
   Node head;
@@ -178,19 +210,6 @@ Function *function() {
   fn->locals = locals;
 
   return fn;
-}
-
-Function *program() {
-  Function head;
-  head.next = NULL;
-  Function *cur = &head;
-
-  while (!at_eof()) {
-    cur->next = function();
-    cur = cur->next;
-  }
-  
-  return head.next;
 }
 
 Node *equality() {
@@ -279,7 +298,7 @@ Node *primary() {
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      lvar = push_lvar(tok);
+      lvar = push_lvar(strndup(tok->str, tok->len));
     }
 
     node->kind = ND_LVAR;

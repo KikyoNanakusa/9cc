@@ -187,6 +187,12 @@ void codegen(Function *prog) {
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, %d\n", fn->stack_size);
 
+    int i = 0;
+    for (LVarList *varList = fn->params; varList; varList = varList->next) {
+      LVar *var = varList->var;
+      printf("  mov [rbp-%d], %s\n", var->offset, argreg[i++]);
+    }
+
     for (Node *node = fn->node; node; node = node->next) {
       gen(node);
     }
