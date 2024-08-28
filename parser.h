@@ -56,6 +56,7 @@ struct Node {
   Node *body; // used only if kind is ND_BLOCK
               //
   char *funcname; // used only if kind is ND_FUNCALL
+  Node *args;     // used only if kind is ND_FUNCALL
 };
 
 
@@ -69,6 +70,7 @@ struct LVar {
 };
 
 void program();
+Node *func_args();
 Node *expr();
 Node *equality();
 Node *relational();
