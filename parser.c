@@ -177,7 +177,7 @@ LVarList *read_func_params() {
   head->var = push_lvar(expect_ident());
   LVarList *cur = head;
 
-  while(consume(")")) {
+  while(!consume(")")) {
     expect(",");
     LVarList *param = calloc(1, sizeof(LVarList));
     param->var = push_lvar(expect_ident());
