@@ -109,7 +109,22 @@ void gen(Node *node) {
         printf("  pop %s\n", argreg[i]);
       }
 
+      //check stack pointer is on 16bytes alignment
+      int seq = labelseq++; 
+
+      printf("  mov rax, rsp\n");
+      printf("  and rax, 16\n");
+      printf("  jnz .Lajust_rsp%d\n", seq);
+      printf("  xor rax, rax\n");
       printf("  call %s\n", node->funcname);
+      printf("  jmp .Lajust_rsp_end%d\n", seq);
+
+      printf(".Lajust_rsp%d:\n", seq);
+      printf("  sub rsp, 8\n");
+      printf("  xor rax, rax\n");
+      printf("  call %s\n", node->funcname);
+      printf("  add rsp, 8\n");
+      printf(".Lajust_rsp_end%d:\n", seq);
       printf("  push rax\n");
       return;
     }
