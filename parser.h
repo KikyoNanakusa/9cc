@@ -37,10 +37,15 @@ typedef struct Node Node;
 // Local variable
 typedef struct LVar LVar;
 struct LVar {
-  LVar *next;
   char *name;
   int len;
   int offset; // offset from rbp
+};
+
+typedef struct LVarList LVarList;
+struct LVarList {
+  LVarList *next;
+  LVar *var;
 };
 
 // Node type of AST
@@ -70,9 +75,10 @@ struct Function  {
   Node *node;
   char *name;
   Function *next;
-  LVar *locals;
+  LVarList *locals;
   int stack_size;
 };
+
 
 Function *program();
 Function *function();

@@ -1,7 +1,7 @@
 #include "parser.h"
 
 // global variables
-LVar *locals = NULL;
+LVarList *locals = NULL;
 
 
 // Create a new node
@@ -24,7 +24,8 @@ Node *new_node_num(int val) {
 
 // Find a declared local variable
 LVar *find_lvar(Token *tok) {
-  for (LVar *var = locals; var; var = var->next) {
+  for (LVarList *varList = locals; varList; varList = varList->next) {
+    LVar *var = varList->var;
     if (var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
       return var;
     }
@@ -33,6 +34,18 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
+LVar *push_lvar(Token *tok) {
+  LVar *var = calloc(1, sizeof(LVar));
+  var->name = tok->str;
+  var->len = tok->len;
+
+  LVarList *varList = calloc(1, sizeof(LVarList));
+  varList->var = var;
+  varList->next = locals;
+  locals = varList;
+
+  return var;
+}
 
 Node *assign() {
   Node *node = equality();
@@ -146,7 +159,8 @@ Node *stmt() {
 Function *function() {
   locals = NULL;
 
-  char *name = expect_ident();
+  Function *fn = calloc(1, sizeof(Function));
+  fn->name = expect_ident();
   expect("(");
   expect(")");
   expect("{");
@@ -160,8 +174,6 @@ Function *function() {
     cur = cur->next;
   }
 
-  Function *fn = calloc(1, sizeof(Function));
-  fn->name = name;
   fn->node = head.next;
   fn->locals = locals;
 
@@ -263,19 +275,14 @@ Node *primary() {
       return node;
     }
 
-
     // if the token is a variable
-    node->kind = ND_LVAR;
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals;
-      lvar->name = tok->str;
-      lvar->len = tok->len;
-      locals = lvar;
+      lvar = push_lvar(tok);
     }
 
+    node->kind = ND_LVAR;
     node->var = lvar;
     return node;
   }
