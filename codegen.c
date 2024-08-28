@@ -6,13 +6,16 @@ char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 char *funcname;
 
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR) {
-    error("Left values is not a variable");
+  if (node->kind == ND_DEREF) {
+    gen(node->lhs);
   }
-
-  printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->var->offset);
-  printf("  push rax\n");
+  else if (node->kind == ND_LVAR) {
+    printf("  mov rax, rbp\n");
+    printf("  sub rax, %d\n", node->var->offset);
+    printf("  push rax\n");
+  } else {
+    error("Left values is not a variable: %d", node->kind);
+  }
 }
 
 // Generate assembly code
@@ -124,6 +127,17 @@ void gen(Node *node) {
       printf("  call %s\n", node->funcname);
       printf("  add rsp, 8\n");
       printf(".Lajust_rsp_end%d:\n", seq);
+      printf("  push rax\n");
+      return;
+    }
+    case ND_ADDR: {
+      gen_lval(node->lhs);
+      return;
+    }
+    case ND_DEREF: {
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  mov rax, [rax]\n");
       printf("  push rax\n");
       return;
     }
