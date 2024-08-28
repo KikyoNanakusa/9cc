@@ -1,7 +1,4 @@
 #include "utils.h"
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 extern char *user_input;
 
@@ -24,4 +21,21 @@ void error_at(char *loc, char *fmt, ...) {
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");
   exit(1);
+}
+
+size_t strnlen(const char *s, size_t maxlen) {
+    size_t len = 0;
+    while (len < maxlen && s[len] != '\0') {
+        len++;
+    }
+    return len;
+}
+
+char *strndup(const char *s, size_t n) {
+    char *result;
+    size_t len = strnlen(s, n);
+    result = (char *)malloc(len + 1);
+    if (!result) return NULL;
+    result[len] = '\0';
+    return (char *)memcpy(result, s, len);
 }

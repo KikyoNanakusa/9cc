@@ -25,26 +25,18 @@ int main(int argc, char **argv) {
 	token = tokenize(user_input);
 
   // Create AST
-  program();
-
-	printf(".intel_syntax noprefix\n");
-	printf(".global main\n");
-	printf("main:\n");
-
-  // prologue
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
-
-  // Generate assembly code for the AST
-  for(int i = 0; code[i]; i++) {
-    gen(code[i]);
-    printf("  pop rax\n");
+  Function *prog = program();
+  for (Function *fn = prog; fn; fn = fn->next) {
+    int offset = 0;
+    for (LVar *var = fn->locals; var; var = var->next) {
+      offset += 8;
+      var->offset = offset;
+    }
+    fn->stack_size = offset;
   }
 
-  printf("  mov rsp, rbp\n");
-  printf("  pop rax\n");
-	printf("  ret\n");
+  codegen(prog);
+
 	return 0;
 }
 

@@ -3,3 +3,4 @@
 
 void gen(Node *node);
 void gen_lval(Node *node);
+void codegen(Function *prog);

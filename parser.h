@@ -9,8 +9,6 @@
 #include <strings.h>
 #include <stddef.h>
 
-char *strndup(const char *s, size_t n);
-size_t strnlen(const char *s, size_t maxlen);
 
 // Node type of AST
 typedef enum {
@@ -35,7 +33,15 @@ typedef enum {
 
 
 typedef struct Node Node;
-extern Node *code[100];
+
+// Local variable
+typedef struct LVar LVar;
+struct LVar {
+  LVar *next;
+  char *name;
+  int len;
+  int offset; // offset from rbp
+};
 
 // Node type of AST
 struct Node {
@@ -44,7 +50,7 @@ struct Node {
   Node *lhs;
   Node *rhs;
   int val;    // val is used only if only kind is ND_NUM
-  int offset; // offset is used only if kind is ND_LVAR
+  LVar *var; // offset is used only if kind is ND_LVAR
               //
   Node *cond; // used only if kind is ND_IF or ND_WHILE
   Node *then; // used only if kind is ND_IF or ND_WHILE
@@ -59,17 +65,17 @@ struct Node {
   Node *args;     // used only if kind is ND_FUNCALL
 };
 
-
-// Local variable
-typedef struct LVar LVar;
-struct LVar {
-  LVar *next;
+typedef struct Function Function;
+struct Function  {
+  Node *node;
   char *name;
-  int len;
-  int offset; // offset from rbp
+  Function *next;
+  LVar *locals;
+  int stack_size;
 };
 
-void program();
+Function *program();
+Function *function();
 Node *func_args();
 Node *expr();
 Node *equality();

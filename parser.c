@@ -1,25 +1,8 @@
 #include "parser.h"
 
 // global variables
-Node *code[100];
 LVar *locals = NULL;
 
-size_t strnlen(const char *s, size_t maxlen) {
-    size_t len = 0;
-    while (len < maxlen && s[len] != '\0') {
-        len++;
-    }
-    return len;
-}
-
-char *strndup(const char *s, size_t n) {
-    char *result;
-    size_t len = strnlen(s, n);
-    result = (char *)malloc(len + 1);
-    if (!result) return NULL;
-    result[len] = '\0';
-    return (char *)memcpy(result, s, len);
-}
 
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
@@ -160,12 +143,42 @@ Node *stmt() {
   return node;
 }
 
-void program() {
-  int i = 0;
-  while(!at_eof()) {
-    code[i++] = stmt();
+Function *function() {
+  locals = NULL;
+
+  char *name = expect_ident();
+  expect("(");
+  expect(")");
+  expect("{");
+
+  Node head;
+  head.next = NULL;
+  Node *cur = &head;
+
+  while(!consume("}")) {
+    cur->next = stmt();
+    cur = cur->next;
   }
-  code[i] = NULL;
+
+  Function *fn = calloc(1, sizeof(Function));
+  fn->name = name;
+  fn->node = head.next;
+  fn->locals = locals;
+
+  return fn;
+}
+
+Function *program() {
+  Function head;
+  head.next = NULL;
+  Function *cur = &head;
+
+  while (!at_eof()) {
+    cur->next = function();
+    cur = cur->next;
+  }
+  
+  return head.next;
 }
 
 Node *equality() {
@@ -251,28 +264,19 @@ Node *primary() {
     }
 
 
+    // if the token is a variable
     node->kind = ND_LVAR;
-
     LVar *lvar = find_lvar(tok);
 
-    if (lvar) {
-      node->offset = lvar->offset;
-    } else {
+    if (!lvar) {
       lvar = calloc(1, sizeof(LVar));
       lvar->next = locals;
       lvar->name = tok->str;
       lvar->len = tok->len;
-
-      if (locals == NULL) {
-        lvar->offset = 8;
-      } else {
-        lvar->offset = locals->offset + 8;
-      }
-
-      node->offset = lvar->offset;
       locals = lvar;
     }
 
+    node->var = lvar;
     return node;
   }
 
