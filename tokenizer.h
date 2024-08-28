@@ -2,6 +2,7 @@
 #define TOKENIZER_H
 
 #include <stdbool.h>
+#include "utils.h"
 
 typedef enum {
     TK_RESERVED,
@@ -29,6 +30,7 @@ Token *consume_return();
 Token *consume_ident();
 void expect(char *op);
 int expect_number();
+char *expect_ident();
 bool at_eof();
 
 #endif

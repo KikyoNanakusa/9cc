@@ -3,6 +3,7 @@
 
 int labelseq = 0;
 char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *funcname;
 
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR) {
@@ -10,7 +11,7 @@ void gen_lval(Node *node) {
   }
 
   printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->offset);
+  printf("  sub rax, %d\n", node->var->offset);
   printf("  push rax\n");
 }
 
@@ -59,9 +60,7 @@ void gen(Node *node) {
     case ND_RETURN:
       gen(node->lhs);
       printf("  pop rax\n");
-      printf("  mov rsp, rbp\n");
-      printf("  pop rbp\n");
-      printf("  ret\n");
+      printf("  jmp .L.return.%s\n", funcname);
       return;
     case ND_WHILE:
       seq = labelseq++;
@@ -173,4 +172,35 @@ void gen(Node *node) {
   }
 
   printf("  push rax\n");
+}
+
+void codegen(Function *prog) {
+  printf(".intel_syntax noprefix\n");
+
+  for (Function *fn = prog; fn; fn = fn->next) {
+    printf(".global %s\n", fn->name);
+    printf("%s:\n", fn->name);
+    funcname = fn->name;
+
+    // prologue
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, %d\n", fn->stack_size);
+
+    int i = 0;
+    for (LVarList *varList = fn->params; varList; varList = varList->next) {
+      LVar *var = varList->var;
+      printf("  mov [rbp-%d], %s\n", var->offset, argreg[i++]);
+    }
+
+    for (Node *node = fn->node; node; node = node->next) {
+      gen(node);
+    }
+
+    // epilogue
+    printf(".L.return.%s:\n", fn->name);
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+  }
 }

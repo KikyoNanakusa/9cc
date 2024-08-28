@@ -1,25 +1,8 @@
 #include "parser.h"
 
 // global variables
-Node *code[100];
-LVar *locals = NULL;
+LVarList *locals = NULL;
 
-size_t strnlen(const char *s, size_t maxlen) {
-    size_t len = 0;
-    while (len < maxlen && s[len] != '\0') {
-        len++;
-    }
-    return len;
-}
-
-char *strndup(const char *s, size_t n) {
-    char *result;
-    size_t len = strnlen(s, n);
-    result = (char *)malloc(len + 1);
-    if (!result) return NULL;
-    result[len] = '\0';
-    return (char *)memcpy(result, s, len);
-}
 
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
@@ -41,8 +24,9 @@ Node *new_node_num(int val) {
 
 // Find a declared local variable
 LVar *find_lvar(Token *tok) {
-  for (LVar *var = locals; var; var = var->next) {
-    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len)) {
+  for (LVarList *varList = locals; varList; varList = varList->next) {
+    LVar *var = varList->var;
+    if (strlen(var->name) == tok->len && !memcmp(tok->str, var->name, tok->len)) {
       return var;
     }
   }
@@ -50,6 +34,17 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
+LVar *push_lvar(char *name) {
+  LVar *var = calloc(1, sizeof(LVar));
+  var->name = name;
+
+  LVarList *varList = calloc(1, sizeof(LVarList));
+  varList->var = var;
+  varList->next = locals;
+  locals = varList;
+
+  return var;
+}
 
 Node *assign() {
   Node *node = equality();
@@ -160,12 +155,61 @@ Node *stmt() {
   return node;
 }
 
-void program() {
-  int i = 0;
-  while(!at_eof()) {
-    code[i++] = stmt();
+Function *program() {
+  Function head;
+  head.next = NULL;
+  Function *cur = &head;
+
+  while (!at_eof()) {
+    cur->next = function();
+    cur = cur->next;
   }
-  code[i] = NULL;
+  
+  return head.next;
+}
+
+LVarList *read_func_params() {
+  if (consume(")")) {
+    return NULL;
+  }
+
+  LVarList *head = calloc(1, sizeof(LVarList));
+  head->var = push_lvar(expect_ident());
+  LVarList *cur = head;
+
+  while(!consume(")")) {
+    expect(",");
+    LVarList *param = calloc(1, sizeof(LVarList));
+    param->var = push_lvar(expect_ident());
+    cur->next = param;
+    cur = cur->next;
+  }
+
+  return head;
+}
+
+Function *function() {
+  locals = NULL;
+
+  Function *fn = calloc(1, sizeof(Function));
+  fn->name = expect_ident();
+  expect("(");
+  fn->params = read_func_params();
+  expect("{");
+
+  Node head;
+  head.next = NULL;
+  Node *cur = &head;
+
+  while(!consume("}")) {
+    cur->next = stmt();
+    cur = cur->next;
+  }
+
+  fn->node = head.next;
+  fn->locals = locals;
+
+  return fn;
 }
 
 Node *equality() {
@@ -250,29 +294,15 @@ Node *primary() {
       return node;
     }
 
-
-    node->kind = ND_LVAR;
-
+    // if the token is a variable
     LVar *lvar = find_lvar(tok);
 
-    if (lvar) {
-      node->offset = lvar->offset;
-    } else {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals;
-      lvar->name = tok->str;
-      lvar->len = tok->len;
-
-      if (locals == NULL) {
-        lvar->offset = 8;
-      } else {
-        lvar->offset = locals->offset + 8;
-      }
-
-      node->offset = lvar->offset;
-      locals = lvar;
+    if (!lvar) {
+      lvar = push_lvar(strndup(tok->str, tok->len));
     }
 
+    node->kind = ND_LVAR;
+    node->var = lvar;
     return node;
   }
 
@@ -281,11 +311,11 @@ Node *primary() {
 
 Node *unary() {
   if (consume("+")) {
-    return primary();
+    return unary();
   }
 
   if (consume("-")) {
-    return new_node(ND_SUB, new_node_num(0), primary());
+    return new_node(ND_SUB, new_node_num(0), unary());
   }
 
   return primary();

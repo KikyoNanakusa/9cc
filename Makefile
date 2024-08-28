@@ -13,7 +13,7 @@ $(TARGET): $(OBJS)
 tokenizer.o: tokenizer.c tokenizer.h utils.h
 utils.o: utils.c utils.h
 parser.o: parser.c parser.h tokenizer.h utils.h
-codegen.o: codegen.c codegen.h tokenizer.h utils.h
+codegen.o: codegen.c codegen.h tokenizer.h utils.h parser.h
 
 test: $(TARGET)
 	./test.sh

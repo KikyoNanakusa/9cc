@@ -151,6 +151,16 @@ void expect(char *op) {
 	token = token->next;
 }
 
+char *expect_ident() {
+  if (token->kind != TK_IDENT) {
+    error_at(token->str, "expected an indentifier");
+  }
+
+  char *s = strndup(token->str, token->len);
+  token = token->next;
+  return s;
+}
+
 // If the next token is a number, read one token and return the value.
 // Otherwise, it returns an error.
 int expect_number() {
