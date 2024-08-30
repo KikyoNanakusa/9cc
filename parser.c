@@ -34,9 +34,10 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
-LVar *push_lvar(char *name) {
+LVar *push_lvar(char *name, Type *type) {
   LVar *var = calloc(1, sizeof(LVar));
   var->name = name;
+  var->type = type;
 
   LVarList *varList = calloc(1, sizeof(LVarList));
   varList->var = var;
@@ -59,6 +60,30 @@ Node *expr() {
   return assign();
 }
 
+// TODO: implement initialization
+Node *declaration(Type *type) {
+  /* Token *tok = token; */
+  LVar *var = push_lvar(expect_ident(), type);
+
+
+  if (consume(";")) {
+    Node *null_node = calloc(1, sizeof(Node));
+    null_node->kind = ND_NULL;
+    return null_node;
+  }
+
+  expect("=");
+
+  Node *lhs = calloc(1, sizeof(Node));
+  lhs->kind = ND_LVAR;
+  lhs->var = var;
+
+  Node *rhs = expr();
+
+  expect(";");
+  Node *node = new_node(ND_ASSIGN, lhs, rhs);
+  return node;
+}
 
 Node *stmt() {
   Node *node;
@@ -146,6 +171,14 @@ Node *stmt() {
     return node;
   }
 
+  if (consume("int")) {
+    Type *type = type_int();
+    while (consume("*")) {
+      type = pointer_to(type);
+    }
+    return declaration(type);
+  }
+
   node = expr();
 
   if (!consume(";")) {
@@ -173,14 +206,17 @@ LVarList *read_func_params() {
     return NULL;
   }
 
+  expect("int");
   LVarList *head = calloc(1, sizeof(LVarList));
-  head->var = push_lvar(expect_ident());
+  head->var = push_lvar(expect_ident(), type_int());
   LVarList *cur = head;
 
   while(!consume(")")) {
     expect(",");
+    expect("int");
     LVarList *param = calloc(1, sizeof(LVarList));
-    param->var = push_lvar(expect_ident());
+
+    param->var = push_lvar(expect_ident(), type_int());
     cur->next = param;
     cur = cur->next;
   }
@@ -192,6 +228,10 @@ Function *function() {
   locals = NULL;
 
   Function *fn = calloc(1, sizeof(Function));
+
+  // TODO: impelement type
+  expect("int");
+
   fn->name = expect_ident();
   expect("(");
   fn->params = read_func_params();
@@ -294,11 +334,11 @@ Node *primary() {
       return node;
     }
 
-    // if the token is a variable
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      lvar = push_lvar(strndup(tok->str, tok->len));
+      /* lvar = push_lvar(strndup(tok->str, tok->len)); */
+      error("undefined variable");
     }
 
     node->kind = ND_LVAR;

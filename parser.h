@@ -3,6 +3,7 @@
 
 #include "tokenizer.h"
 #include "utils.h"
+#include "type.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +32,7 @@ typedef enum {
   ND_FUNCALL,
   ND_ADDR,
   ND_DEREF,
+  ND_NULL,
 } NodeKind;
 
 
@@ -40,6 +42,7 @@ typedef struct Node Node;
 typedef struct LVar LVar;
 struct LVar {
   char *name;
+  Type *type;
   int offset; // offset from rbp
 };
 
@@ -56,7 +59,7 @@ struct Node {
   Node *lhs;
   Node *rhs;
   int val;    // val is used only if only kind is ND_NUM
-  LVar *var; // offset is used only if kind is ND_LVAR
+  LVar *var;  // offset is used only if kind is ND_LVAR
               //
   Node *cond; // used only if kind is ND_IF or ND_WHILE
   Node *then; // used only if kind is ND_IF or ND_WHILE
@@ -83,6 +86,7 @@ struct Function  {
 
 Function *program();
 Function *function();
+Node *declaration(Type *type);
 Node *func_args();
 Node *expr();
 Node *equality();

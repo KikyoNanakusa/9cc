@@ -59,6 +59,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if (startswith(p, "int")) {
+      cur = new_token(TK_RESERVED, cur, p, 3);
+      p += 3;
+      continue;
+    }
+
     if(startswith(p, "if")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;

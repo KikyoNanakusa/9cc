@@ -141,6 +141,9 @@ void gen(Node *node) {
       printf("  push rax\n");
       return;
     }
+    case ND_NULL: {
+      return;
+    }
   }
 
   gen(node->lhs);
