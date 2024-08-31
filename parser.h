@@ -33,6 +33,8 @@ typedef enum {
   ND_ADDR,
   ND_DEREF,
   ND_NULL,
+  ND_PTR_ADD,
+  ND_PTR_SUB,
 } NodeKind;
 
 

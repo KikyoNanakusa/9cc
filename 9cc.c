@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
   for (Function *fn = prog; fn; fn = fn->next) {
     int offset = 0;
     for (LVarList *varList = fn->locals; varList; varList = varList->next) {
-      offset += 8;
+      offset += varList->var->type->size;
       varList->var->offset = offset;
     }
     fn->stack_size = offset;

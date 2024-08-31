@@ -2,8 +2,83 @@
 #include "utils.h"
 
 int labelseq = 0;
-char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *argreg_8[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *argreg_4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+char *argreg_1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 char *funcname;
+
+void scale_pointer(Node *lhs, Node *rhs) {
+  Type *ptr_type = NULL;
+  bool is_lhs_pointer = false;
+
+  if (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) {
+    ptr_type = lhs->var->type->ptr_to;  
+    is_lhs_pointer = true;
+  } else if (lhs->kind == ND_ADDR) {
+    ptr_type = lhs->lhs->var->type;  
+    is_lhs_pointer = true;
+  }
+
+  // if lhs is not a pointer, try rhs
+  if (ptr_type == NULL) {  
+    if (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) {
+      ptr_type = rhs->var->type->ptr_to;  
+      is_lhs_pointer = false;
+    } else if (rhs->kind == ND_ADDR) {
+      ptr_type = rhs->lhs->var->type;  
+      is_lhs_pointer = false;
+    }
+  }
+
+  if (ptr_type == NULL || ptr_type->size == 0) {
+    error("Invalid pointer type for pointer addition.");
+  }
+
+  if (is_lhs_pointer) {
+    printf("  imul rdi, %d\n", ptr_type->size);
+  } else {
+    printf("  imul rax, %d\n", ptr_type->size);
+  }
+}
+
+int get_lvar_size(Node *node) {
+  if (node->kind == ND_DEREF) {
+    if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
+      if (node->lhs->lhs->kind == ND_ADDR) {
+        return 8;
+      }
+      return node->lhs->lhs->var->type->size;
+    }
+
+    return node->lhs->var->type->ptr_to->size;
+  } else {
+    return node->var->type->size;
+  }
+}
+
+void gen_load(Node *node) {
+  int size = get_lvar_size(node);
+
+  if (size == 1) {
+    printf("  movsx rax, byte ptr [rax]\n");
+  } else if (size == 4) {
+    printf("  movsxd rax, dword ptr [rax]\n");
+  } else {
+    printf("  mov rax, [rax]\n");
+  }
+}
+
+void gen_store(Node *node) {
+  int size = get_lvar_size(node);
+
+  if (size == 1) {
+    printf("  mov [rax], dil\n");
+  } else if (size == 4) {
+    printf("  mov [rax], edi\n");
+  } else {
+    printf("  mov [rax], rdi\n");
+  }
+}
 
 void gen_lval(Node *node) {
   if (node->kind == ND_DEREF) {
@@ -27,7 +102,7 @@ void gen(Node *node) {
     case ND_LVAR:
       gen_lval(node);
       printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
+      gen_load(node);
       printf("  push rax\n");
       return;
     case ND_ASSIGN:
@@ -36,7 +111,7 @@ void gen(Node *node) {
 
       printf("  pop rdi\n");
       printf("  pop rax\n");
-      printf("  mov [rax], rdi\n");
+      gen_store(node->lhs);
       printf("  push rdi\n");
       return;
     case ND_IF:
@@ -108,7 +183,7 @@ void gen(Node *node) {
       }
 
       for (int i = nargs-1; i >= 0; i--) {
-        printf("  pop %s\n", argreg[i]);
+        printf("  pop %s\n", argreg_8[i]);
       }
 
       //check stack pointer is on 16bytes alignment
@@ -159,6 +234,18 @@ void gen(Node *node) {
     case ND_SUB:
       printf("  sub rax, rdi\n");
       break;
+    case ND_PTR_ADD: {
+      scale_pointer(node->lhs, node->rhs);
+
+      printf("  add rax, rdi\n");
+      break;
+    }
+    case ND_PTR_SUB: {
+      scale_pointer(node->lhs, node->rhs);
+
+      printf("  sub rax, rdi\n");
+      break;
+    }
     case ND_MUL:
       printf("  imul rax, rdi\n");
       break;
@@ -207,7 +294,14 @@ void codegen(Function *prog) {
     int i = 0;
     for (LVarList *varList = fn->params; varList; varList = varList->next) {
       LVar *var = varList->var;
-      printf("  mov [rbp-%d], %s\n", var->offset, argreg[i++]);
+      int size = var->type->size;
+      if (size == 1) {
+        printf("  mov [rbp-%d], %s\n", var->offset, argreg_1[i++]);
+      } else if (size == 4) {
+        printf("  mov [rbp-%d], %s\n", var->offset, argreg_4[i++]);
+      } else {
+        printf("  mov [rbp-%d], %s\n", var->offset, argreg_8[i++]);
+      }
     }
 
     for (Node *node = fn->node; node; node = node->next) {

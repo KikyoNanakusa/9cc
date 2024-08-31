@@ -26,6 +26,17 @@ assert() {
   fi
 }
 
+assert 3 'int main() { int x=3; return *&x; }'
+assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
+assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
+assert 5 'int main() { int x=3; int y=5; return *(1+&x); }'
+assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
+assert 5 'int main() { int x=3; int y=5; int *z=&x; return *(z+1); }'
+assert 3 'int main() { int x=3; int y=5; int *z=&y; return *(z-1); }'
+assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
+assert 7 'int main() { int x=3; int y=5; *(&x+1)=7; return y; }'
+assert 7 'int main() { int x=3; int y=5; *(&y-1)=7; return x; }'
+
 assert 0 'int main() { return 0; }'
 assert 42 'int main() { return 42; }'
 assert 21 'int main() { return 5+20-4; }'
@@ -91,16 +102,5 @@ assert 32 'int main() { return ret32(); } int ret32() { return 32; }'
 assert 7 'int main() { return add2(3,4); } int add2(int x, int y) { return x+y; }'
 assert 1 'int main() { return sub2(4,3); } int sub2(int x, int y) { return x-y; }'
 assert 55 'int main() { return fib(9); } int fib(int x) { if (x<=1) return 1; return fib(x-1) + fib(x-2); }'
-
-assert 3 'int main() { int x=3; return *&x; }'
-assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
-assert 5 'int main() { int x=3; int y=5; return *(&x+8); }'
-assert 5 'int main() { int x=3; int y=5; return *(8+&x); }'
-assert 3 'int main() { int x=3; int y=5; return *(&y-8); }'
-assert 5 'int main() { int x=3; int y=5; int *z=&x; return *(z+8); }'
-assert 3 'int main() { int x=3; int y=5; int *z=&y; return *(z-8); }'
-assert 5 'int main() { int x=3; int *y=&x; *y=5; return x; }'
-assert 7 'int main() { int x=3; int y=5; *(&x+8)=7; return y; }'
-assert 7 'int main() { int x=3; int y=5; *(&y-8)=7; return x; }'
 
 echo OK
