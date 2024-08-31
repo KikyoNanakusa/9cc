@@ -285,15 +285,31 @@ Node *relational() {
   }
 }
 
+bool is_calc_ptr(Node *lhs, Node *rhs) {
+  return ((lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+          lhs->kind == ND_ADDR ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
+          rhs->kind == ND_ADDR);
+}
+
 Node *add() {
   Node *node = mul();
 
   for(;;) {
     if (consume("+")) {
-      node = new_node(ND_ADD, node, mul());
-    }
-    else if (consume("-")) {
-      node = new_node(ND_SUB, node, mul());
+      Node *rhs = mul();
+      if (is_calc_ptr(node, rhs)) {
+        node = new_node(ND_PTR_ADD, node, rhs);
+      } else {
+        node = new_node(ND_ADD, node, rhs);
+      }
+    } else if (consume("-")) {
+      Node *rhs = mul();
+      if (is_calc_ptr(node, rhs)) {
+        node = new_node(ND_PTR_SUB, node, rhs);
+      } else {
+        node = new_node(ND_SUB, node, rhs);
+      }
     }
     else {
       return node;
