@@ -10,9 +10,9 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
 9cc.o: 9cc.c tokenizer.h utils.h codegen.h parser.h
-tokenizer.o: tokenizer.c tokenizer.h utils.h
+tokenizer.o: tokenizer.c tokenizer.h utils.h parser.h
 type.o: type.c type.h
-utils.o: utils.c utils.h
+utils.o: utils.c utils.h parser.h
 parser.o: parser.c parser.h tokenizer.h utils.h type.h
 codegen.o: codegen.c codegen.h tokenizer.h utils.h parser.h
 

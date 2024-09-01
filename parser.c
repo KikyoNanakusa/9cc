@@ -4,6 +4,31 @@
 LVarList *locals = NULL;
 
 
+// get the size of the node
+int get_size(Node *node) {
+  // At this time, ND_NUM is the only node that has a size of 4.
+  if (node->kind == ND_NUM) {
+    return 4;
+  }
+
+  if (node->kind == ND_ADDR) {
+    return 8;
+  }
+
+  if (node->kind == ND_DEREF) {
+    if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
+      if (node->lhs->lhs->kind == ND_ADDR) {
+        return 8;
+      }
+      return node->lhs->lhs->var->type->size;
+    }
+
+    return node->lhs->var->type->ptr_to->size;
+  } else {
+    return node->var->type->size;
+  }
+}
+
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
@@ -366,6 +391,11 @@ Node *primary() {
 }
 
 Node *unary() {
+  if (consume_sizeof()) {
+    Node *node = unary();
+    return new_node_num(get_size(node));
+  }
+
   if (consume("+")) {
     return unary();
   }
