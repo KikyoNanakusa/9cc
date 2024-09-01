@@ -51,6 +51,7 @@ void gen_load(Node *node) {
   } else {
     printf("  mov rax, [rax]\n");
   }
+  printf("  push rax\n");
 }
 
 void gen_store(Node *node) {
@@ -87,8 +88,9 @@ void gen(Node *node) {
     case ND_LVAR:
       gen_lval(node);
       printf("  pop rax\n");
-      gen_load(node);
-      printf("  push rax\n");
+      if (node->var && node->var->type->kind != TY_ARRAY) {
+        gen_load(node);
+      }
       return;
     case ND_ASSIGN:
       gen_lval(node->lhs);
