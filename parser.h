@@ -98,4 +98,5 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+int get_size(Node *node);
 #endif // PARSER_H

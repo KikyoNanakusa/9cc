@@ -40,7 +40,12 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
-    // tokenize return
+    if (startswith(p, "sizeof")) {
+      cur = new_token(TK_SIZEOF, cur, p, strlen("sizeof"));
+      p += strlen("sizeof");
+      continue;
+    }
+
     if(startswith(p, "return") && !is_alpha_num(p[6])) {
       cur = new_token(TK_RETURN, cur, p, 6);
       p += 6;
@@ -137,6 +142,16 @@ Token *consume_return() {
 
 Token *consume_ident() {
   if (token->kind != TK_IDENT) {
+    return NULL;
+  }
+
+  Token *tok = token;
+  token = token->next;
+  return tok;
+}
+
+Token *consume_sizeof() {
+  if (token->kind != TK_SIZEOF) {
     return NULL;
   }
 

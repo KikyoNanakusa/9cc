@@ -41,23 +41,8 @@ void scale_pointer(Node *lhs, Node *rhs) {
   }
 }
 
-int get_lvar_size(Node *node) {
-  if (node->kind == ND_DEREF) {
-    if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
-      if (node->lhs->lhs->kind == ND_ADDR) {
-        return 8;
-      }
-      return node->lhs->lhs->var->type->size;
-    }
-
-    return node->lhs->var->type->ptr_to->size;
-  } else {
-    return node->var->type->size;
-  }
-}
-
 void gen_load(Node *node) {
-  int size = get_lvar_size(node);
+  int size = get_size(node);
 
   if (size == 1) {
     printf("  movsx rax, byte ptr [rax]\n");
@@ -69,7 +54,7 @@ void gen_load(Node *node) {
 }
 
 void gen_store(Node *node) {
-  int size = get_lvar_size(node);
+  int size = get_size(node);
 
   if (size == 1) {
     printf("  mov [rax], dil\n");

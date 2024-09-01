@@ -39,3 +39,4 @@ char *strndup(const char *s, size_t n) {
     result[len] = '\0';
     return (char *)memcpy(result, s, len);
 }
+
