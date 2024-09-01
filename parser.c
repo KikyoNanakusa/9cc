@@ -88,7 +88,14 @@ Node *expr() {
 // TODO: implement initialization
 Node *declaration(Type *type) {
   /* Token *tok = token; */
-  LVar *var = push_lvar(expect_ident(), type);
+  char *name = expect_ident();
+  if (consume("[")) {
+    int array_size = expect_number();
+    expect("]");
+    type = array_of(type, array_size);
+  }
+
+  LVar *var = push_lvar(name, type);
 
 
   if (consume(";")) {

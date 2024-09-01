@@ -26,6 +26,8 @@ assert() {
   fi
 }
 
+assert 0 'int main() {int a[10]; return 0;}'
+
 assert 4 'int main() { int x; return sizeof(x); }'
 assert 4 'int main() { int x; return sizeof x; }'
 assert 8 'int main() { int *x; return sizeof(x); }'
