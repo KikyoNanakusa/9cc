@@ -13,7 +13,6 @@ struct Type {
   int size;         // sizeof(type)
 
   size_t array_size;   // if kind is TY_ARRAY, array_size is the size of array
-  Type *array_of;    // if kind is TY_ARRAY, array_of is the type of array
 };
 
 Type *type_int();

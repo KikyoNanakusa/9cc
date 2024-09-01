@@ -17,16 +17,19 @@ int get_size(Node *node) {
 
   if (node->kind == ND_DEREF) {
     if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
-      if (node->lhs->lhs->kind == ND_ADDR) {
-        return 8;
-      }
-      return node->lhs->lhs->var->type->size;
+      return get_size(node->lhs);
+    } else if (node->lhs->var->type->kind == TY_PTR) {
+      return node->lhs->var->type->ptr_to->size;
+    } else {
+      get_size(node->lhs);
     }
-
-    return node->lhs->var->type->ptr_to->size;
-  } else {
-    return node->var->type->size;
   }
+
+  if (node->kind == ND_PTR_ADD || node->kind == ND_PTR_SUB) {
+    return get_size(node->lhs);
+  }
+
+  return node->var->type->size;
 }
 
 // Create a new node
