@@ -15,6 +15,14 @@ bool is_ptr(Node *node) {
   return node->var->type->kind == TY_PTR || node->var->type->kind == TY_ARRAY;
 }
 
+bool is_array(Node *node) {
+  if (!node->var) {
+    return false;
+  }
+
+  return node->var->type->kind == TY_ARRAY;
+}
+
 // get the size of the node
 int get_size(Node *node) {
   // At this time, ND_NUM is the only node that has a size of 4.

@@ -12,8 +12,7 @@ void scale_pointer(Node *lhs, Node *rhs) {
   Type *ptr_type = NULL;
   bool is_lhs_pointer = false;
 
-  if (lhs->kind == ND_LVAR && 
-      (lhs->var->type->kind == TY_PTR || lhs->var->type->kind == TY_ARRAY)) {
+  if (lhs->kind == ND_LVAR && is_ptr(lhs)) {
     ptr_type = lhs->var->type->ptr_to;  
     is_lhs_pointer = true;
   } else if (lhs->kind == ND_ADDR) {
@@ -23,8 +22,7 @@ void scale_pointer(Node *lhs, Node *rhs) {
 
   // if lhs is not a pointer, try rhs
   if (ptr_type == NULL) {  
-    if (rhs->kind == ND_LVAR && 
-        (rhs->var->type->kind == TY_PTR || rhs->var->type->kind == TY_ARRAY)) {
+    if (rhs->kind == ND_LVAR && is_ptr(rhs)) {
       ptr_type = rhs->var->type->ptr_to;  
       is_lhs_pointer = false;
     } else if (rhs->kind == ND_ADDR) {
@@ -91,7 +89,7 @@ void gen(Node *node) {
       return;
     case ND_LVAR:
       gen_lval(node);
-      if (node->var && node->var->type->kind != TY_ARRAY) {
+      if (!is_array(node)) {
         gen_load(node);
       }
       return;
@@ -202,9 +200,7 @@ void gen(Node *node) {
 
     case ND_DEREF: {
       gen(node->lhs);
-      if (node->lhs->var && node->lhs->var->type->kind == TY_ARRAY) {
-        return;
-      } else {
+      if (!is_array(node->lhs)) {
         gen_load(node->lhs);
       }
       return;

@@ -99,6 +99,7 @@ Node *unary();
 Node *primary();
 
 bool is_ptr(Node *node);
+bool is_array(Node *node);
 Node *parse_deref(Node *node);
 int get_size(Node *node);
 #endif // PARSER_H
