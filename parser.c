@@ -36,6 +36,10 @@ int get_size(Node *node) {
 
   if (node->kind == ND_DEREF) {
     if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
+      if (is_array(node->lhs->lhs)) {
+        return node->lhs->lhs->var->type->ptr_to->size;
+      }
+
       return get_size(node->lhs);
     } else if (node->lhs->var->type->kind == TY_PTR) {
       return node->lhs->var->type->ptr_to->size;
@@ -411,8 +415,17 @@ Node *primary() {
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      /* lvar = push_lvar(strndup(tok->str, tok->len)); */
       error("undefined variable");
+    }
+    
+    if (consume("[")) {
+      Node *index = expr();
+      node->kind = ND_LVAR;
+      node->var = lvar;
+      Node *ptr_add = new_node(ND_PTR_ADD, node, index);
+      node = new_node(ND_DEREF, ptr_add, NULL);
+      expect("]");
+      return node;
     }
 
     node->kind = ND_LVAR;
