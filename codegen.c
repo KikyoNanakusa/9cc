@@ -7,11 +7,13 @@ char *argreg_4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 char *argreg_1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 char *funcname;
 
+
 void scale_pointer(Node *lhs, Node *rhs) {
   Type *ptr_type = NULL;
   bool is_lhs_pointer = false;
 
-  if (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) {
+  if (lhs->kind == ND_LVAR && 
+      (lhs->var->type->kind == TY_PTR || lhs->var->type->kind == TY_ARRAY)) {
     ptr_type = lhs->var->type->ptr_to;  
     is_lhs_pointer = true;
   } else if (lhs->kind == ND_ADDR) {
@@ -21,7 +23,8 @@ void scale_pointer(Node *lhs, Node *rhs) {
 
   // if lhs is not a pointer, try rhs
   if (ptr_type == NULL) {  
-    if (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) {
+    if (rhs->kind == ND_LVAR && 
+        (rhs->var->type->kind == TY_PTR || rhs->var->type->kind == TY_ARRAY)) {
       ptr_type = rhs->var->type->ptr_to;  
       is_lhs_pointer = false;
     } else if (rhs->kind == ND_ADDR) {
@@ -44,6 +47,7 @@ void scale_pointer(Node *lhs, Node *rhs) {
 void gen_load(Node *node) {
   int size = get_size(node);
 
+  printf("  pop rax\n");
   if (size == 1) {
     printf("  movsx rax, byte ptr [rax]\n");
   } else if (size == 4) {
@@ -87,7 +91,6 @@ void gen(Node *node) {
       return;
     case ND_LVAR:
       gen_lval(node);
-      printf("  pop rax\n");
       if (node->var && node->var->type->kind != TY_ARRAY) {
         gen_load(node);
       }
@@ -196,11 +199,14 @@ void gen(Node *node) {
       gen_lval(node->lhs);
       return;
     }
+
     case ND_DEREF: {
       gen(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
-      printf("  push rax\n");
+      if (node->lhs->var && node->lhs->var->type->kind == TY_ARRAY) {
+        return;
+      } else {
+        gen_load(node->lhs);
+      }
       return;
     }
     case ND_NULL: {

@@ -27,6 +27,11 @@ assert() {
 }
 
 assert 0 'int main() {int a[10]; return 0;}'
+assert 3 'int main() { int a[2]; *a = 1; *(a + 1) = 2; int *p; p = a; return *p + *(p + 1);}'
+
+# assert 3 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x; }'
+# assert 4 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+1); }'
+# assert 5 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *(x+2); }'
 
 assert 4 'int main() { int x; return sizeof(x); }'
 assert 4 'int main() { int x; return sizeof x; }'

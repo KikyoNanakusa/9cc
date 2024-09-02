@@ -3,6 +3,17 @@
 // global variables
 LVarList *locals = NULL;
 
+// Parse the dereference node
+Node *parse_deref(Node *node) {
+  if (node->kind == ND_DEREF) {
+    parse_deref(node->lhs);
+  }
+  return node;
+}
+
+bool is_ptr(Node *node) {
+  return node->var->type->kind == TY_PTR || node->var->type->kind == TY_ARRAY;
+}
 
 // get the size of the node
 int get_size(Node *node) {
@@ -21,7 +32,7 @@ int get_size(Node *node) {
     } else if (node->lhs->var->type->kind == TY_PTR) {
       return node->lhs->var->type->ptr_to->size;
     } else {
-      get_size(node->lhs);
+      return get_size(node->lhs);
     }
   }
 
@@ -88,9 +99,7 @@ Node *expr() {
   return assign();
 }
 
-// TODO: implement initialization
 Node *declaration(Type *type) {
-  /* Token *tok = token; */
   char *name = expect_ident();
   if (consume("[")) {
     int array_size = expect_number();
@@ -99,7 +108,6 @@ Node *declaration(Type *type) {
   }
 
   LVar *var = push_lvar(name, type);
-
 
   if (consume(";")) {
     Node *null_node = calloc(1, sizeof(Node));
@@ -321,9 +329,12 @@ Node *relational() {
 }
 
 bool is_calc_ptr(Node *lhs, Node *rhs) {
-  return ((lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+  return (
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
           lhs->kind == ND_ADDR ||
           (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
           rhs->kind == ND_ADDR);
 }
 
