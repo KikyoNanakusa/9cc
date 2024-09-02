@@ -48,6 +48,10 @@ int get_size(Node *node) {
     return get_size(node->lhs);
   }
 
+  if (node->kind == ND_LVAR && node->var->type->kind == TY_ARRAY) {
+    return node->var->type->array_size * node->var->type->ptr_to->size;
+  }
+
   return node->var->type->size;
 }
 
