@@ -3,6 +3,25 @@
 // global variables
 LVarList *locals = NULL;
 
+// Parse the dereference node
+Node *parse_deref(Node *node) {
+  if (node->kind == ND_DEREF) {
+    parse_deref(node->lhs);
+  }
+  return node;
+}
+
+bool is_ptr(Node *node) {
+  return node->var->type->kind == TY_PTR || node->var->type->kind == TY_ARRAY;
+}
+
+bool is_array(Node *node) {
+  if (!node->var) {
+    return false;
+  }
+
+  return node->var->type->kind == TY_ARRAY;
+}
 
 // get the size of the node
 int get_size(Node *node) {
@@ -17,16 +36,27 @@ int get_size(Node *node) {
 
   if (node->kind == ND_DEREF) {
     if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
-      if (node->lhs->lhs->kind == ND_ADDR) {
-        return 8;
+      if (is_array(node->lhs->lhs)) {
+        return node->lhs->lhs->var->type->ptr_to->size;
       }
-      return node->lhs->lhs->var->type->size;
-    }
 
-    return node->lhs->var->type->ptr_to->size;
-  } else {
-    return node->var->type->size;
+      return get_size(node->lhs);
+    } else if (node->lhs->var->type->kind == TY_PTR) {
+      return node->lhs->var->type->ptr_to->size;
+    } else {
+      return get_size(node->lhs);
+    }
   }
+
+  if (node->kind == ND_PTR_ADD || node->kind == ND_PTR_SUB) {
+    return get_size(node->lhs);
+  }
+
+  if (node->kind == ND_LVAR && node->var->type->kind == TY_ARRAY) {
+    return node->var->type->array_size * node->var->type->ptr_to->size;
+  }
+
+  return node->var->type->size;
 }
 
 // Create a new node
@@ -85,11 +115,15 @@ Node *expr() {
   return assign();
 }
 
-// TODO: implement initialization
 Node *declaration(Type *type) {
-  /* Token *tok = token; */
-  LVar *var = push_lvar(expect_ident(), type);
+  char *name = expect_ident();
+  if (consume("[")) {
+    int array_size = expect_number();
+    expect("]");
+    type = array_of(type, array_size);
+  }
 
+  LVar *var = push_lvar(name, type);
 
   if (consume(";")) {
     Node *null_node = calloc(1, sizeof(Node));
@@ -311,9 +345,12 @@ Node *relational() {
 }
 
 bool is_calc_ptr(Node *lhs, Node *rhs) {
-  return ((lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+  return (
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
           lhs->kind == ND_ADDR ||
           (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
           rhs->kind == ND_ADDR);
 }
 
@@ -378,8 +415,17 @@ Node *primary() {
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      /* lvar = push_lvar(strndup(tok->str, tok->len)); */
       error("undefined variable");
+    }
+    
+    if (consume("[")) {
+      Node *index = expr();
+      node->kind = ND_LVAR;
+      node->var = lvar;
+      Node *ptr_add = new_node(ND_PTR_ADD, node, index);
+      node = new_node(ND_DEREF, ptr_add, NULL);
+      expect("]");
+      return node;
     }
 
     node->kind = ND_LVAR;

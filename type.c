@@ -14,3 +14,12 @@ Type *pointer_to(Type *type) {
   pointer->size = 8;
   return pointer;
 }
+
+Type *array_of(Type *type, size_t size) {
+  Type *array = calloc(1, sizeof(Type));
+  array->kind = TY_ARRAY;
+  array->ptr_to = type;
+  array->array_size = size;
+  array->size = type->size * size;
+  return array;
+}
