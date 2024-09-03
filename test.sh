@@ -38,7 +38,11 @@ assert 3 "int main() { int a[2]; a[0]=1; a[1]=2; return a[0] + a[1]; }"
 
 assert 1 "int main() { int i; for (i=0; i<3; i=i+1) { if (i==1) return i;} }"
 assert 1 "int main() { int a[2]; int i; i = 1; a[1] = 1; return a[i];}"
-# assert 5 "int main() { int a[3]; int i; for (i=0; i<3; i=i+1) { a[i]=i+1; return a[0]+a[1]+a[2]; } }"
+assert 3 "int main() { int a[2]; int i; for (i=0; i<2; i=i+1) { a[i]=i+1; } return a[0]+a[1]; }"
+assert 6 "int main() { int a=1; int b=2; int c=3; return a+b+c;}"
+assert 12 "int main() { int a[3]; return sizeof(a);}"
+
+assert 6 "int main() {int a[3]; a[0]=1; a[1]=2; a[2]=3; return a[0]+a[1]+a[2];}"
 
 assert 4 'int main() { int x; return sizeof(x); }'
 assert 4 'int main() { int x; return sizeof x; }'
