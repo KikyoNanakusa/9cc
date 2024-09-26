@@ -88,6 +88,7 @@ struct Function  {
 
 Function *program();
 Function *function();
+Type *basetype();
 Node *declaration(Type *type);
 Node *func_args();
 Node *expr();

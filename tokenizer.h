@@ -31,6 +31,7 @@ Token *consume_return();
 Token *consume_ident();
 Token *consume_sizeof();
 void expect(char *op);
+char *expect_basetype();
 int expect_number();
 char *expect_ident();
 bool at_eof();

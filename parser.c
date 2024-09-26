@@ -1,7 +1,10 @@
 #include "parser.h"
 
-// global variables
+// local variables
 LVarList *locals = NULL;
+
+// global variables
+LVarList *globals = NULL;
 
 // Parse the dereference node
 Node *parse_deref(Node *node) {
@@ -230,13 +233,11 @@ Node *stmt() {
     return node;
   }
 
-  if (consume("int")) {
-    Type *type = type_int();
-    while (consume("*")) {
-      type = pointer_to(type);
-    }
+  Type *type = basetype();
+  if (type) {
     return declaration(type);
   }
+
 
   node = expr();
 
@@ -245,6 +246,17 @@ Node *stmt() {
   }
    
   return node;
+}
+
+Type *basetype() {
+  if (consume("int")) {
+    Type *type = type_int();
+    while (consume("*")) {
+      type = pointer_to(type);
+    }
+    return type;
+  }
+  return NULL;
 }
 
 Function *program() {
