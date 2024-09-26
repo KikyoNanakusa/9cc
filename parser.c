@@ -18,6 +18,16 @@ bool is_ptr(Node *node) {
   return node->var->type->kind == TY_PTR || node->var->type->kind == TY_ARRAY;
 }
 
+bool is_calc_ptr(Node *lhs, Node *rhs) {
+  return (
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
+          lhs->kind == ND_ADDR ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
+          rhs->kind == ND_ADDR);
+}
+
 bool is_array(Node *node) {
   if (!node->var) {
     return false;
@@ -301,7 +311,8 @@ Function *function() {
   Function *fn = calloc(1, sizeof(Function));
 
   // TODO: impelement type
-  expect("int");
+  /* expect("int"); */
+  expect_basetype();
 
   fn->name = expect_ident();
   expect("(");
@@ -356,15 +367,6 @@ Node *relational() {
   }
 }
 
-bool is_calc_ptr(Node *lhs, Node *rhs) {
-  return (
-          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
-          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
-          lhs->kind == ND_ADDR ||
-          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
-          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
-          rhs->kind == ND_ADDR);
-}
 
 Node *add() {
   Node *node = mul();
