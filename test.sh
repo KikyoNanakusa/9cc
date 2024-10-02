@@ -26,6 +26,8 @@ assert() {
   fi
 }
 
+assert 0 'int a = 0; int main() { return 0; }'
+
 assert 5 'int main() { int x=3; int y=5; int i=1; return *(&x+i); }'
 assert 0 'int main() {int a[10]; return 0;}'
 assert 1 'int main() { int a[2]; *a = 1; int *p; p = a; return *p;}'

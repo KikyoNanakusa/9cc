@@ -86,8 +86,16 @@ struct Function  {
   LVarList *params;
 };
 
+typedef struct Program Program;
+struct Program {
+  Function *func;
+  Node *global_var;
+  Program *next;
+};
+
 Function *program();
 Function *function();
+Node *global_variable(Type *type);
 Type *basetype();
 Node *declaration(Type *type);
 Node *func_args();
@@ -101,6 +109,7 @@ Node *primary();
 
 bool is_ptr(Node *node);
 bool is_array(Node *node);
+bool is_function();
 Node *parse_deref(Node *node);
 int get_size(Node *node);
-#endif // PARSER_H
+#endif 
