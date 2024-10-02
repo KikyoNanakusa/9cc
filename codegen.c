@@ -7,8 +7,10 @@ char *argreg_4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 char *argreg_1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 char *funcname;
 
-
-void scale_pointer(Node *lhs, Node *rhs) {
+// To do pointer arithmetic, we need to scale the value to be added.
+// by the size of the pointer type.
+// e.g. int *p; p + 1 should be p + 4, not p + 1.
+void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
   Type *ptr_type = NULL;
   bool is_lhs_pointer = false;
 
@@ -224,13 +226,13 @@ void gen(Node *node) {
       printf("  sub rax, rdi\n");
       break;
     case ND_PTR_ADD: {
-      scale_pointer(node->lhs, node->rhs);
+      ajust_pointer_arithmetic(node->lhs, node->rhs);
 
       printf("  add rax, rdi\n");
       break;
     }
     case ND_PTR_SUB: {
-      scale_pointer(node->lhs, node->rhs);
+      ajust_pointer_arithmetic(node->lhs, node->rhs);
 
       printf("  sub rax, rdi\n");
       break;
@@ -293,6 +295,7 @@ void gen_func(Function *fn) {
   for (Node *node = fn->node; node; node = node->next) {
     gen(node);
   }
+
   // epilogue
   printf(".L.return.%s:\n", fn->name);
   printf("  mov rsp, rbp\n");
@@ -306,6 +309,10 @@ void codegen(Program *program) {
   for (Program *prog = program; prog; prog = prog->next) {
     if (prog->func) {
       gen_func(prog->func);
+      continue;
+    } else if(prog->gvar) {
+      //TODO: impelement global variable codegen
+      continue; 
     }
   }
 }
