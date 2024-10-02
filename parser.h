@@ -35,6 +35,7 @@ typedef enum {
   ND_NULL,
   ND_PTR_ADD,
   ND_PTR_SUB,
+  ND_GVAR,
 } NodeKind;
 
 
@@ -74,6 +75,8 @@ struct Node {
               //
   char *funcname; // used only if kind is ND_FUNCALL
   Node *args;     // used only if kind is ND_FUNCALL
+                  //
+  int init_val;   // used only if kind is ND_GVAR
 };
 
 typedef struct Function Function;

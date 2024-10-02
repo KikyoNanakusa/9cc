@@ -324,6 +324,14 @@ Node *global_variable(Type *type) {
     int array_size = expect_number();
     expect("]");
     type = array_of(type, array_size);
+    expect(";");
+
+    // In this version, gloval array cannot be initialize by the time of declaration
+    LVar *var = push_glvar(name, type);
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_GVAR;
+    node->var = var;
+    return node;
   }
 
   LVar *var = push_glvar(name, type);
@@ -335,15 +343,14 @@ Node *global_variable(Type *type) {
   }
 
   expect("=");
-
-  Node *lhs = calloc(1, sizeof(Node));
-  lhs->kind = ND_LVAR;
-  lhs->var = var;
-
-  Node *rhs = expr();
-
+  int init_val = expect_number();
   expect(";");
-  Node *node = new_node(ND_ASSIGN, lhs, rhs);
+
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_GVAR;
+  node->var = var;
+  node->init_val = init_val;
+
   return node;
 }
 

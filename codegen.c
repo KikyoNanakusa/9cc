@@ -10,7 +10,7 @@ char *funcname;
 // To do pointer arithmetic, we need to scale the value to be added.
 // by the size of the pointer type.
 // e.g. int *p; p + 1 should be p + 4, not p + 1.
-void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
+static void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
   Type *ptr_type = NULL;
   bool is_lhs_pointer = false;
 
@@ -303,6 +303,12 @@ void gen_func(Function *fn) {
   printf("  ret\n");
 }
 
+void gen_gvar(Node *node) {
+  // global variables with initial values
+  printf(".%s:\n", node->var->name);
+  printf("  .zero %d\n", node->var->type->size);
+}
+
 void codegen(Program *program) {
   printf(".intel_syntax noprefix\n");
 
@@ -312,6 +318,7 @@ void codegen(Program *program) {
       continue;
     } else if(prog->gvar) {
       //TODO: impelement global variable codegen
+      gen_gvar(prog->gvar);
       continue; 
     }
   }
