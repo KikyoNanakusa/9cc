@@ -89,11 +89,11 @@ struct Function  {
 typedef struct Program Program;
 struct Program {
   Function *func;
-  Node *global_var;
+  Node *gvar;
   Program *next;
 };
 
-Function *program();
+Program *program();
 Function *function();
 Node *global_variable(Type *type);
 Type *basetype();

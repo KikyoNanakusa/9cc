@@ -292,19 +292,25 @@ Type *basetype() {
   return NULL;
 }
 
-Function *program() {
-  Function head;
+Program *program() {
+  Program head;
   head.next = NULL;
-  Function *cur = &head;
+  Program *cur = &head;
 
   while (!at_eof()) {
     Type *type = basetype();
+    Program *program = calloc(1, sizeof(Program));
     if (is_function()) {
-      cur->next = function(type);
+      program->func = function(type);
+      cur->next = program;
       cur = cur->next;
       continue;
     } else {
-      global_variable(type);
+      Node *gvar = global_variable(type);
+      program->gvar = gvar;
+      cur->next = program;
+      cur = cur->next;
+      continue;
     }
   }
   
