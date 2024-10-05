@@ -26,6 +26,11 @@ assert() {
   fi
 }
 
+assert 0 'int a[20]; int main() { a[0] = 1; return 0; }'
+assert 1 'int a[20]; int main() { a[0] = 1; return a[0]; }'
+assert 4 'int a[20]; int main() { a[0] = 1; a[1] = 3; return a[0] + a[1]; }'
+assert 3 'int a[20]; int b[10]; int main() { a[0] = 1; b[9] = 2; return a[0] + b[9]; }'
+
 assert 1 'int x = 1; int main() { return x; }'
 assert 3 'int x = 1; int y = 2; int main() { return x+y; }'
 assert 4 'int x = 2; int main() { int y = 2; return x + y; }'
