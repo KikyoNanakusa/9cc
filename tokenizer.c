@@ -182,6 +182,20 @@ char *expect_ident() {
   return s;
 }
 
+char *expect_basetype() {
+  char *types[] = {"int"};
+
+  for (int i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
+    if (startswith(token->str, types[i]) && token->kind == TK_RESERVED) {
+      char *s = strndup(token->str, token->len);
+      token = token->next;
+      return s;
+    }
+  }
+  
+  error_at(token->str, "expected a base type");
+}
+
 // If the next token is a number, read one token and return the value.
 // Otherwise, it returns an error.
 int expect_number() {

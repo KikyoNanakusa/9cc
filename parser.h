@@ -35,6 +35,7 @@ typedef enum {
   ND_NULL,
   ND_PTR_ADD,
   ND_PTR_SUB,
+  ND_GVAR,
 } NodeKind;
 
 
@@ -46,6 +47,7 @@ struct LVar {
   char *name;
   Type *type;
   int offset; // offset from rbp
+  bool is_global;
 };
 
 typedef struct LVarList LVarList;
@@ -74,6 +76,8 @@ struct Node {
               //
   char *funcname; // used only if kind is ND_FUNCALL
   Node *args;     // used only if kind is ND_FUNCALL
+                  //
+  int init_val;   // used only if kind is ND_GVAR
 };
 
 typedef struct Function Function;
@@ -86,8 +90,17 @@ struct Function  {
   LVarList *params;
 };
 
-Function *program();
+typedef struct Program Program;
+struct Program {
+  Function *func;
+  Node *gvar;
+  Program *next;
+};
+
+Program *program();
 Function *function();
+Node *global_variable(Type *type);
+Type *basetype();
 Node *declaration(Type *type);
 Node *func_args();
 Node *expr();
@@ -100,6 +113,7 @@ Node *primary();
 
 bool is_ptr(Node *node);
 bool is_array(Node *node);
+bool is_function();
 Node *parse_deref(Node *node);
 int get_size(Node *node);
-#endif // PARSER_H
+#endif 

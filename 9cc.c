@@ -25,14 +25,17 @@ int main(int argc, char **argv) {
 	token = tokenize(user_input);
 
   // Create AST
-  Function *prog = program();
-  for (Function *fn = prog; fn; fn = fn->next) {
-    int offset = 0;
-    for (LVarList *varList = fn->locals; varList; varList = varList->next) {
-      offset += varList->var->type->size;
-      varList->var->offset = offset;
+  Program *prog = program();
+  for (Program *pg = prog; pg; pg = pg->next) {
+    if (pg->func) {
+      Function *fn = pg->func;
+      int offset = 0;
+      for (LVarList *varList = fn->locals; varList; varList = varList->next) {
+        offset += varList->var->type->size;
+        varList->var->offset = offset;
+      }
+      fn->stack_size = offset;
     }
-    fn->stack_size = offset;
   }
 
   codegen(prog);

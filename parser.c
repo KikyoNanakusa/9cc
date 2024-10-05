@@ -1,7 +1,10 @@
 #include "parser.h"
 
-// global variables
+// local variables
 LVarList *locals = NULL;
+
+// global variables
+LVarList *globals = NULL;
 
 // Parse the dereference node
 Node *parse_deref(Node *node) {
@@ -13,6 +16,16 @@ Node *parse_deref(Node *node) {
 
 bool is_ptr(Node *node) {
   return node->var->type->kind == TY_PTR || node->var->type->kind == TY_ARRAY;
+}
+
+bool is_calc_ptr(Node *lhs, Node *rhs) {
+  return (
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
+          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
+          lhs->kind == ND_ADDR ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
+          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
+          rhs->kind == ND_ADDR);
 }
 
 bool is_array(Node *node) {
@@ -77,9 +90,19 @@ Node *new_node_num(int val) {
   return node;
 }
 
-// Find a declared local variable
+// Find a declared local / global variable
 LVar *find_lvar(Token *tok) {
+  // find a local variables first
+  // this is because the local variables have higher priority than the global variables
   for (LVarList *varList = locals; varList; varList = varList->next) {
+    LVar *var = varList->var;
+    if (strlen(var->name) == tok->len && !memcmp(tok->str, var->name, tok->len)) {
+      return var;
+    }
+  }
+
+  // find a global variables second
+  for (LVarList *varList = globals; varList; varList = varList->next) {
     LVar *var = varList->var;
     if (strlen(var->name) == tok->len && !memcmp(tok->str, var->name, tok->len)) {
       return var;
@@ -93,12 +116,25 @@ LVar *push_lvar(char *name, Type *type) {
   LVar *var = calloc(1, sizeof(LVar));
   var->name = name;
   var->type = type;
+  var->is_global = false;
 
   LVarList *varList = calloc(1, sizeof(LVarList));
   varList->var = var;
   varList->next = locals;
   locals = varList;
 
+  return var;
+}
+
+LVar *push_glvar(char *name, Type *type) {
+  LVar *var = calloc(1, sizeof(LVar));
+  var->name = name;
+  var->type = type;
+  var->is_global = true;
+  LVarList *varList = calloc(1, sizeof(LVarList));
+  varList->var = var;
+  varList->next = globals;
+  globals = varList;
   return var;
 }
 
@@ -230,13 +266,11 @@ Node *stmt() {
     return node;
   }
 
-  if (consume("int")) {
-    Type *type = type_int();
-    while (consume("*")) {
-      type = pointer_to(type);
-    }
+  Type *type = basetype();
+  if (type) {
     return declaration(type);
   }
+
 
   node = expr();
 
@@ -247,17 +281,92 @@ Node *stmt() {
   return node;
 }
 
-Function *program() {
-  Function head;
+Type *basetype() {
+  if (consume("int")) {
+    Type *type = type_int();
+    while (consume("*")) {
+      type = pointer_to(type);
+    }
+    return type;
+  }
+
+  //TODO: support other types
+  return NULL;
+}
+
+Program *program() {
+  Program head;
   head.next = NULL;
-  Function *cur = &head;
+  Program *cur = &head;
 
   while (!at_eof()) {
-    cur->next = function();
-    cur = cur->next;
+    Type *type = basetype();
+    Program *program = calloc(1, sizeof(Program));
+    if (is_function()) {
+      program->func = function(type);
+      cur->next = program;
+      cur = cur->next;
+      continue;
+    } else {
+      Node *gvar = global_variable(type);
+      program->gvar = gvar;
+      cur->next = program;
+      cur = cur->next;
+      continue;
+    }
   }
   
   return head.next;
+}
+
+
+Node *global_variable(Type *type) {
+  char *name = expect_ident();
+  if (consume("[")) {
+    int array_size = expect_number();
+    expect("]");
+    type = array_of(type, array_size);
+    expect(";");
+
+    // In this version, gloval array cannot be initialize by the time of declaration
+    LVar *var = push_glvar(name, type);
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_GVAR;
+    node->var = var;
+    return node;
+  }
+
+  LVar *var = push_glvar(name, type);
+
+  if (consume(";")) {
+    Node *null_node = calloc(1, sizeof(Node));
+    null_node->kind = ND_GVAR;
+    null_node->var = var;
+    null_node->init_val = 0;
+    return null_node;
+  }
+
+  expect("=");
+  int init_val = expect_number();
+  expect(";");
+
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_GVAR;
+  node->var = var;
+  node->init_val = init_val;
+
+  return node;
+}
+
+bool is_function() {
+  Token *ident_tok = token;
+  Token *tok = token->next;
+
+  if(tok->str[0] != '(') {
+    return false;
+  } 
+
+  return true;
 }
 
 LVarList *read_func_params() {
@@ -283,17 +392,16 @@ LVarList *read_func_params() {
   return head;
 }
 
-Function *function() {
+//TODO: support return type
+Function *function(Type *ret_type) {
   locals = NULL;
 
   Function *fn = calloc(1, sizeof(Function));
 
-  // TODO: impelement type
-  expect("int");
-
   fn->name = expect_ident();
   expect("(");
   fn->params = read_func_params();
+  
   expect("{");
 
   Node head;
@@ -344,15 +452,6 @@ Node *relational() {
   }
 }
 
-bool is_calc_ptr(Node *lhs, Node *rhs) {
-  return (
-          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_PTR) ||
-          (lhs->kind == ND_LVAR && lhs->var->type->kind == TY_ARRAY) ||
-          lhs->kind == ND_ADDR ||
-          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_PTR) ||
-          (rhs->kind == ND_LVAR && rhs->var->type->kind == TY_ARRAY) ||
-          rhs->kind == ND_ADDR);
-}
 
 Node *add() {
   Node *node = mul();

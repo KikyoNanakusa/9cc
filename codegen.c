@@ -7,8 +7,10 @@ char *argreg_4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 char *argreg_1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
 char *funcname;
 
-
-void scale_pointer(Node *lhs, Node *rhs) {
+// To do pointer arithmetic, we need to scale the value to be added.
+// by the size of the pointer type.
+// e.g. int *p; p + 1 should be p + 4, not p + 1.
+static void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
   Type *ptr_type = NULL;
   bool is_lhs_pointer = false;
 
@@ -71,14 +73,25 @@ void gen_store(Node *node) {
 void gen_lval(Node *node) {
   if (node->kind == ND_DEREF) {
     gen(node->lhs);
-  }
-  else if (node->kind == ND_LVAR) {
+  } else if (node->kind == ND_LVAR) {
+    if (node->var->is_global) {
+      gen_glval(node);
+      return;
+    }
+    
     printf("  mov rax, rbp\n");
     printf("  sub rax, %d\n", node->var->offset);
     printf("  push rax\n");
   } else {
     error("Left values is not a variable: %d", node->kind);
   }
+}
+
+void gen_glval(Node *node) {
+  // RIP-relative addressing
+  printf("  lea rax, [rip + %s]\n", node->var->name);
+  printf("  push rax\n");
+  return;
 }
 
 // Generate assembly code
@@ -224,13 +237,13 @@ void gen(Node *node) {
       printf("  sub rax, rdi\n");
       break;
     case ND_PTR_ADD: {
-      scale_pointer(node->lhs, node->rhs);
+      ajust_pointer_arithmetic(node->lhs, node->rhs);
 
       printf("  add rax, rdi\n");
       break;
     }
     case ND_PTR_SUB: {
-      scale_pointer(node->lhs, node->rhs);
+      ajust_pointer_arithmetic(node->lhs, node->rhs);
 
       printf("  sub rax, rdi\n");
       break;
@@ -267,40 +280,65 @@ void gen(Node *node) {
   printf("  push rax\n");
 }
 
-void codegen(Function *prog) {
+void gen_func(Function *fn) {
+  printf("  .global %s\n", fn->name);
+  printf("  .text\n");
+  printf("%s:\n", fn->name);
+  funcname = fn->name;
+
+  // prologue
+  printf("  push rbp\n");
+  printf("  mov rbp, rsp\n");
+  printf("  sub rsp, %d\n", fn->stack_size);
+
+  int i = 0;
+  for (LVarList *varList = fn->params; varList; varList = varList->next) {
+    LVar *var = varList->var;
+    int size = var->type->size;
+    if (size == 1) {
+      printf("  mov [rbp-%d], %s\n", var->offset, argreg_1[i++]);
+    } else if (size == 4) {
+      printf("  mov [rbp-%d], %s\n", var->offset, argreg_4[i++]);
+    } else {
+      printf("  mov [rbp-%d], %s\n", var->offset, argreg_8[i++]);
+    }
+  }
+
+  for (Node *node = fn->node; node; node = node->next) {
+    gen(node);
+  }
+
+  // epilogue
+  printf(".L.return.%s:\n", fn->name);
+  printf("  mov rsp, rbp\n");
+  printf("  pop rbp\n");
+  printf("  ret\n");
+}
+
+void gen_gvar(Node *node) {
+  // global variables with initial values
+  // TODO: implement initializations
+  printf("  .data\n");
+  printf("  .global %s\n", node->var->name);
+  printf("%s:\n", node->var->name);
+
+  if(node->init_val != 0) {
+    printf("  .long %d\n", node->init_val);
+  } else {
+    printf("  .zero %d\n", node->var->type->size);
+  }
+}
+
+void codegen(Program *program) {
   printf(".intel_syntax noprefix\n");
 
-  for (Function *fn = prog; fn; fn = fn->next) {
-    printf(".global %s\n", fn->name);
-    printf("%s:\n", fn->name);
-    funcname = fn->name;
-
-    // prologue
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", fn->stack_size);
-
-    int i = 0;
-    for (LVarList *varList = fn->params; varList; varList = varList->next) {
-      LVar *var = varList->var;
-      int size = var->type->size;
-      if (size == 1) {
-        printf("  mov [rbp-%d], %s\n", var->offset, argreg_1[i++]);
-      } else if (size == 4) {
-        printf("  mov [rbp-%d], %s\n", var->offset, argreg_4[i++]);
-      } else {
-        printf("  mov [rbp-%d], %s\n", var->offset, argreg_8[i++]);
-      }
+  for (Program *prog = program; prog; prog = prog->next) {
+    if (prog->func) {
+      gen_func(prog->func);
+      continue;
+    } else if(prog->gvar) {
+      gen_gvar(prog->gvar);
+      continue; 
     }
-
-    for (Node *node = fn->node; node; node = node->next) {
-      gen(node);
-    }
-
-    // epilogue
-    printf(".L.return.%s:\n", fn->name);
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret\n");
   }
 }
