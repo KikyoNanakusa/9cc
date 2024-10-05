@@ -26,6 +26,16 @@ assert() {
   fi
 }
 
+assert 0 'int main() {char a; return 0; }'
+assert 0 'int main() {char a = 1; return 0; }'
+assert 1 'int main() {char a = 1; return a; }'
+assert 4 'int main() {char a = 1; char b = 3; char c = a+b; return c; }'
+assert 1 'int main() {char a[3]; a[0] = 1; return a[0]; }'
+assert 3 'int main() {char a[3]; a[0] = -1; a[1] = 2; int b = 4; return a[0] + b; }'
+assert 1 'char a = 1; int main() { return a; }'
+assert 2 'char a = 1; int main() { int b = 1; return a+b; }'
+assert 3 'char a = 1; char b = 2; int main() { return a+b; }'
+
 assert 0 'int a[20]; int main() { a[0] = 1; return 0; }'
 assert 1 'int a[20]; int main() { a[0] = 1; return a[0]; }'
 assert 4 'int a[20]; int main() { a[0] = 1; a[1] = 3; return a[0] + a[1]; }'

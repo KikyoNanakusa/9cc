@@ -281,17 +281,23 @@ Node *stmt() {
   return node;
 }
 
+
+
 Type *basetype() {
+  Type *type = NULL;
   if (consume("int")) {
-    Type *type = type_int();
-    while (consume("*")) {
-      type = pointer_to(type);
-    }
-    return type;
+    type = type_int();
+  } else if(consume("char")) {
+    type = type_char();
   }
 
-  //TODO: support other types
-  return NULL;
+  if (type) {
+    while(consume("*")) {
+      type = pointer_to(type);
+    }
+  }
+
+  return type;
 }
 
 Program *program() {

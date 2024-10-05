@@ -70,6 +70,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if (startswith(p, "char")) {
+      cur = new_token(TK_RESERVED, cur, p, 4);
+      p += 4;
+      continue;
+    }
+
     if(startswith(p, "if")) {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
@@ -183,7 +189,7 @@ char *expect_ident() {
 }
 
 char *expect_basetype() {
-  char *types[] = {"int"};
+  char *types[] = {"int", "char"};
 
   for (int i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
     if (startswith(token->str, types[i]) && token->kind == TK_RESERVED) {
