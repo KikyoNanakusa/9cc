@@ -316,14 +316,16 @@ void gen_func(Function *fn) {
 }
 
 void gen_gvar(Node *node) {
-  // global variables with initial values
-  // TODO: implement initializations
   printf("  .data\n");
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
   if(node->init_val != 0) {
-    printf("  .long %d\n", node->init_val);
+    if(node->var->type->size == 1) {
+      printf("  .byte %d\n", node->init_val);
+    } else {
+      printf("  .long %d\n", node->init_val);
+    }
   } else {
     printf("  .zero %d\n", node->var->type->size);
   }
