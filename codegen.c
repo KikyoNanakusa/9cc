@@ -321,7 +321,12 @@ void gen_gvar(Node *node) {
   printf("  .data\n");
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
-  printf("  .zero %d\n", node->var->type->size);
+
+  if(node->init_val != 0) {
+    printf("  .long %d\n", node->init_val);
+  } else {
+    printf("  .zero %d\n", node->var->type->size);
+  }
 }
 
 void codegen(Program *program) {
