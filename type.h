@@ -4,6 +4,7 @@ typedef enum {
   TY_INT,
   TY_PTR,
   TY_ARRAY,
+  TY_CHAR,
 } TypeKind;
 
 typedef struct Type Type;
