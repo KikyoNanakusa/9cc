@@ -47,6 +47,7 @@ struct LVar {
   char *name;
   Type *type;
   int offset; // offset from rbp
+  bool is_global;
 };
 
 typedef struct LVarList LVarList;

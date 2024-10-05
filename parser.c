@@ -116,6 +116,7 @@ LVar *push_lvar(char *name, Type *type) {
   LVar *var = calloc(1, sizeof(LVar));
   var->name = name;
   var->type = type;
+  var->is_global = false;
 
   LVarList *varList = calloc(1, sizeof(LVarList));
   varList->var = var;
@@ -129,6 +130,7 @@ LVar *push_glvar(char *name, Type *type) {
   LVar *var = calloc(1, sizeof(LVar));
   var->name = name;
   var->type = type;
+  var->is_global = true;
   LVarList *varList = calloc(1, sizeof(LVarList));
   varList->var = var;
   varList->next = globals;
@@ -338,7 +340,9 @@ Node *global_variable(Type *type) {
 
   if (consume(";")) {
     Node *null_node = calloc(1, sizeof(Node));
-    null_node->kind = ND_NULL;
+    null_node->kind = ND_GVAR;
+    null_node->var = var;
+    null_node->init_val = 0;
     return null_node;
   }
 

@@ -73,14 +73,25 @@ void gen_store(Node *node) {
 void gen_lval(Node *node) {
   if (node->kind == ND_DEREF) {
     gen(node->lhs);
-  }
-  else if (node->kind == ND_LVAR) {
+  } else if (node->kind == ND_LVAR) {
+    if (node->var->is_global) {
+      gen_glval(node);
+      return;
+    }
+    
     printf("  mov rax, rbp\n");
     printf("  sub rax, %d\n", node->var->offset);
     printf("  push rax\n");
   } else {
     error("Left values is not a variable: %d", node->kind);
   }
+}
+
+void gen_glval(Node *node) {
+  // RIP-relative addressing
+  printf("  lea rax, [rip + %s]\n", node->var->name);
+  printf("  push rax\n");
+  return;
 }
 
 // Generate assembly code
@@ -270,7 +281,8 @@ void gen(Node *node) {
 }
 
 void gen_func(Function *fn) {
-  printf(".global %s\n", fn->name);
+  printf("  .global %s\n", fn->name);
+  printf("  .text\n");
   printf("%s:\n", fn->name);
   funcname = fn->name;
 
@@ -305,7 +317,10 @@ void gen_func(Function *fn) {
 
 void gen_gvar(Node *node) {
   // global variables with initial values
-  printf(".%s:\n", node->var->name);
+  // TODO: implement initializations
+  printf("  .data\n");
+  printf("  .global %s\n", node->var->name);
+  printf("%s:\n", node->var->name);
   printf("  .zero %d\n", node->var->type->size);
 }
 
@@ -317,7 +332,6 @@ void codegen(Program *program) {
       gen_func(prog->func);
       continue;
     } else if(prog->gvar) {
-      //TODO: impelement global variable codegen
       gen_gvar(prog->gvar);
       continue; 
     }
