@@ -36,6 +36,7 @@ typedef enum {
   ND_PTR_ADD,
   ND_PTR_SUB,
   ND_GVAR,
+  ND_LITERAL,
 } NodeKind;
 
 
@@ -54,6 +55,19 @@ typedef struct LVarList LVarList;
 struct LVarList {
   LVarList *next;
   LVar *var;
+};
+
+typedef struct Literal Literal;
+struct Literal {
+  char *string;
+  int len; 
+  int labelseq;
+};
+
+typedef struct LiteralList LiteralList;
+struct LiteralList {
+  LiteralList *next;
+  Literal *literal;
 };
 
 // Node type of AST
@@ -78,6 +92,9 @@ struct Node {
   Node *args;     // used only if kind is ND_FUNCALL
                   //
   int init_val;   // used only if kind is ND_GVAR
+  Literal *init_literal; // used only if kind is ND_GVAR
+                  
+  Literal *literal;  // used only if kind is ND_LITERAL
 };
 
 typedef struct Function Function;
@@ -116,4 +133,8 @@ bool is_array(Node *node);
 bool is_function();
 Node *parse_deref(Node *node);
 int get_size(Node *node);
+
+extern LiteralList *literals;
 #endif 
+
+

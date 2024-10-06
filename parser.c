@@ -6,6 +6,8 @@ LVarList *locals = NULL;
 // global variables
 LVarList *globals = NULL;
 
+LiteralList *literals = NULL;
+
 // Parse the dereference node
 Node *parse_deref(Node *node) {
   if (node->kind == ND_DEREF) {
@@ -47,6 +49,11 @@ int get_size(Node *node) {
     return 8;
   }
 
+  if (node->kind == ND_LITERAL) {
+    // Because of zero byte( end of string), add 1;
+    return strlen(node->literal->string)+1;
+  }
+
   if (node->kind == ND_DEREF) {
     if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
       if (is_array(node->lhs->lhs)) {
@@ -70,6 +77,30 @@ int get_size(Node *node) {
   }
 
   return node->var->type->size;
+}
+
+char consume_char_literal() {
+  Token *tok = consume_ident();
+  if(tok) {
+    if(tok->len != 1) {
+      error_at(tok->str, "Character literal should contain only one character");
+    }
+
+    char c = tok->str[0];
+    return c;
+  } else {
+    error("Empty char constant");
+  }
+}
+
+char *consume_string_literal() {
+  Token *tok = consume_ident();
+  if (tok) {
+    char *c = strndup(tok->str, tok->len);
+    return c;
+  } else {
+    return "";
+  }
 }
 
 // Create a new node
@@ -136,6 +167,18 @@ LVar *push_glvar(char *name, Type *type) {
   varList->next = globals;
   globals = varList;
   return var;
+}
+
+Literal *push_literal(char *string) {
+  Literal *literal = calloc(1, sizeof(Literal));
+  literal->string = string;
+  literal->len = strlen(string);
+
+  LiteralList *literalList = calloc(1, sizeof(LiteralList));
+  literalList->literal = literal;
+  literalList->next = literals;
+  literals = literalList;
+  return literal;
 }
 
 Node *assign() {
@@ -353,13 +396,27 @@ Node *global_variable(Type *type) {
   }
 
   expect("=");
-  int init_val = expect_number();
+
+  int init_val = 0;
+  Literal *init_literal = NULL;
+  if (consume("'")) {
+    char c = consume_char_literal();
+    init_val = (int) c;
+    expect("'");
+  } else if (consume("\"")) {
+    char *c = consume_string_literal();
+    expect("\"");
+    init_literal = push_literal(c);
+  } else {
+    init_val = expect_number();
+  }
   expect(";");
 
   Node *node = calloc(1, sizeof(Node));
   node->kind = ND_GVAR;
   node->var = var;
   node->init_val = init_val;
+  node->init_literal = init_literal;
 
   return node;
 }
@@ -498,10 +555,38 @@ Node *func_args() {
   return head;
 }
 
+
 Node *primary() {
   if (consume("(")) {
     Node *node = expr();
     expect(")");
+    return node;
+  }
+
+  // single character literal will be replaced to num node;
+  if (consume("'")) {
+    char c = consume_char_literal();
+    expect("'");
+    return new_node_num( (int) c);
+  }
+
+  if (consume("\"")) {
+    char *c = consume_string_literal();
+    expect("\"");
+    Literal *literal = push_literal(c);
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LITERAL;
+    node->literal = literal;
+
+    if (consume("[")) {
+      Node *index = expr();
+      Node *ptr_add = new_node(ND_PTR_ADD, node, index);
+      node = new_node(ND_DEREF, ptr_add, NULL);
+      expect("]");
+      return node;
+    }
+
     return node;
   }
 

@@ -26,6 +26,24 @@ assert() {
   fi
 }
 
+assert 0 "char *c = \"aaa\"; int main() { return 0; }"
+assert 97 "char *c = \"abc\"; int main() { return c[0]; }"
+assert 98 "char *c = \"abc\"; int main() { return c[1]; }"
+
+assert 0 "int main() {char *a = \"aaa\"; return 0;}"
+assert 97 "int main() { char *a = \"abc\"; return a[0];}"
+assert 98 "int main() { char *a = \"abc\"; return a[1];}"
+assert 99 "int main() { char *a = \"abc\"; return a[2];}"
+assert 97 "int main() { return \"abc\"[0]; }"
+assert 98 "int main() { return \"abc\"[1]; }"
+assert 99 "int main() { return \"abc\"[2]; }"
+assert 4 "int main() { return sizeof(\"aaa\"); }"
+
+assert 97 "int main() { char a = 'a'; return a;}"
+assert 97 "char a = 'a'; int main() {return a;}"
+assert 0 "int main() {char a = 'a'; char a_2 = 'a'; return a - a_2;}"
+assert 1 "char a = 'a'; char b = 'b'; int main() { return b - a; }"
+
 assert 0 'int main() {char a; return 0; }'
 assert 0 'int main() {char a = 1; return 0; }'
 assert 1 'int main() {char a = 1; return a; }'
