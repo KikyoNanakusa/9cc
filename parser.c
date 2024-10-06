@@ -89,7 +89,7 @@ char consume_char_literal() {
     char c = tok->str[0];
     return c;
   } else {
-    error("Empty char constant");
+    error_at(token->str, "Empty char constant");
   }
 }
 
@@ -232,7 +232,7 @@ Node *stmt() {
     node->lhs = expr();
 
     if (!consume(";")) {
-      error("';' is expected");
+      error_at(token->str, "';' is expected");
     }
     return node;
   }
@@ -318,7 +318,7 @@ Node *stmt() {
   node = expr();
 
   if (!consume(";")) {
-    error("';' is expected");
+    error_at(token->str, "';' is expected");
   }
    
   return node;
@@ -605,7 +605,7 @@ Node *primary() {
     LVar *lvar = find_lvar(tok);
 
     if (!lvar) {
-      error("undefined variable");
+      error_at(token->str, "undefined variable");
     }
     
     if (consume("[")) {

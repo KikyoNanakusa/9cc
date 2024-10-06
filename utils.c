@@ -1,6 +1,7 @@
 #include "utils.h"
 
-extern char *user_input;
+extern char *file_path;
+extern char *source_code;
 
 void error(char *fmt, ...) {
 	va_list ap;
@@ -11,15 +12,31 @@ void error(char *fmt, ...) {
 }
 
 // Reports an error location and exit.
-void error_at(char *loc, char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  int pos = loc - user_input;
-  fprintf(stderr, "%s\n", user_input);
-  fprintf(stderr, "%*s", pos, ""); // print pos spaces.
-  fprintf(stderr, "^ ");
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
+void error_at(char *loc, char *msg) {
+  char *line = loc;
+  while(source_code < line && line[-1] != '\n') {
+    line--;
+  }
+
+  char *end = loc;
+  while (*end != '\n') {
+    end++;
+  }
+
+  int line_num = 1;
+  for (char *p = source_code; p < line; p++) {
+    if (*p == '\n') {
+      line_num++;
+    }
+  }
+
+  int ident = fprintf(stderr, "%s:%d ", file_path, line_num);
+  fprintf(stderr, "%.*s\n", (int)(end - line), line);
+
+  int pos = loc - line + ident;
+  fprintf(stderr, "%*s", pos, "");
+  fprintf(stderr, "^ %s\n", msg);
+
   exit(1);
 }
 
