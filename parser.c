@@ -6,6 +6,8 @@ LVarList *locals = NULL;
 // global variables
 LVarList *globals = NULL;
 
+LiteralList *literals = NULL;
+
 // Parse the dereference node
 Node *parse_deref(Node *node) {
   if (node->kind == ND_DEREF) {
@@ -86,6 +88,16 @@ char consume_char_literal() {
   }
 }
 
+char *consume_multi_char_literal() {
+  Token *tok = consume_ident();
+  if (tok) {
+    char *c = strndup(tok->str, tok->len);
+    return c;
+  } else {
+    return "";
+  }
+}
+
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
@@ -150,6 +162,18 @@ LVar *push_glvar(char *name, Type *type) {
   varList->next = globals;
   globals = varList;
   return var;
+}
+
+Literal *push_literal(char *string) {
+  Literal *literal = calloc(1, sizeof(Literal));
+  literal->string = string;
+  literal->len = strlen(string);
+
+  LiteralList *literalList = calloc(1, sizeof(LiteralList));
+  literalList->literal = literal;
+  literalList->next = literals;
+  literals = literalList;
+  return literal;
 }
 
 Node *assign() {
@@ -532,6 +556,18 @@ Node *primary() {
     char c = consume_char_literal();
     expect("'");
     return new_node_num( (int) c);
+  }
+
+  if (consume("\"")) {
+    char *c = consume_multi_char_literal();
+    expect("\"");
+    Literal *literal = push_literal(c);
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LITERAL;
+    node->literal = literal;
+
+    return node;
   }
 
   Token *tok = consume_ident();
