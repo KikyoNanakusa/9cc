@@ -26,6 +26,10 @@ assert() {
   fi
 }
 
+assert 0 "char *c = \"aaa\"; int main() { return 0; }"
+assert 97 "char *c = \"abc\"; int main() { return c[0]; }"
+assert 98 "char *c = \"abc\"; int main() { return c[1]; }"
+
 assert 0 "int main() {char *a = \"aaa\"; return 0;}"
 assert 97 "int main() { char *a = \"abc\"; return a[0];}"
 assert 98 "int main() { char *a = \"abc\"; return a[1];}"

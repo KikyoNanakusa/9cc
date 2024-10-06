@@ -396,11 +396,17 @@ Node *global_variable(Type *type) {
   }
 
   expect("=");
+
   int init_val = 0;
+  Literal *init_literal = NULL;
   if (consume("'")) {
     char c = consume_char_literal();
     init_val = (int) c;
     expect("'");
+  } else if (consume("\"")) {
+    char *c = consume_string_literal();
+    expect("\"");
+    init_literal = push_literal(c);
   } else {
     init_val = expect_number();
   }
@@ -410,6 +416,7 @@ Node *global_variable(Type *type) {
   node->kind = ND_GVAR;
   node->var = var;
   node->init_val = init_val;
+  node->init_literal = init_literal;
 
   return node;
 }

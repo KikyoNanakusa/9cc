@@ -92,7 +92,8 @@ struct Node {
   Node *args;     // used only if kind is ND_FUNCALL
                   //
   int init_val;   // used only if kind is ND_GVAR
-                  //
+  Literal *init_literal; // used only if kind is ND_GVAR
+                  
   Literal *literal;  // used only if kind is ND_LITERAL
 };
 

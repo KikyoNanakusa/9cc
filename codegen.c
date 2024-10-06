@@ -332,6 +332,11 @@ void gen_gvar(Node *node) {
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
+  if (node->init_literal != NULL) {
+    printf("  .quad .LC%d\n", node->init_literal->labelseq);
+    return;
+  }
+
   if (node->init_val != 0) {
     if (node->var->type->size == 1) {
       printf("  .byte %d\n", node->init_val);
