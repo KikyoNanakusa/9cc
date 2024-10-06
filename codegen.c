@@ -20,6 +20,9 @@ static void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
   } else if (lhs->kind == ND_ADDR) {
     ptr_type = lhs->lhs->var->type;  
     is_lhs_pointer = true;
+  } else if (lhs->kind == ND_LITERAL) {
+    ptr_type = type_char();
+    is_lhs_pointer = true;
   }
 
   // if lhs is not a pointer, try rhs
@@ -29,6 +32,9 @@ static void ajust_pointer_arithmetic(Node *lhs, Node *rhs) {
       is_lhs_pointer = false;
     } else if (rhs->kind == ND_ADDR) {
       ptr_type = rhs->lhs->var->type;  
+      is_lhs_pointer = false;
+    } else if (rhs->kind == ND_LITERAL) {
+      ptr_type = type_char();
       is_lhs_pointer = false;
     }
   }
@@ -74,6 +80,7 @@ void gen_lval(Node *node) {
   if (node->kind == ND_DEREF) {
     gen(node->lhs);
   } else if (node->kind == ND_LVAR) {
+    // global variable
     if (node->var->is_global) {
       gen_glval(node);
       return;
@@ -218,6 +225,11 @@ void gen(Node *node) {
       }
       return;
     }
+    case ND_LITERAL: {
+      printf("  lea rax, [rip+.LC%d]\n", node->literal->labelseq);
+      printf("  push rax\n");
+      return;
+    }
     case ND_NULL: {
       return;
     }
@@ -320,9 +332,11 @@ void gen_gvar(Node *node) {
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
-  if(node->init_val != 0) {
-    if(node->var->type->size == 1) {
+  if (node->init_val != 0) {
+    if (node->var->type->size == 1) {
       printf("  .byte %d\n", node->init_val);
+    } else if (node->var->type->size == 8) {
+      printf("  .quad %d\n", node->init_val);
     } else {
       printf("  .long %d\n", node->init_val);
     }
@@ -331,16 +345,36 @@ void gen_gvar(Node *node) {
   }
 }
 
+void encode_literal(Literal *literal) {
+  printf("  .data\n");
+  printf(".LC%d:\n", labelseq);
+  for(int i = 0; i < literal->len; i++) {
+    printf("  .byte %d\n", literal->string[i]);
+  }
+  printf("  .byte 0\n");
+  literal->labelseq = labelseq;
+  labelseq++;
+}
+
 void codegen(Program *program) {
   printf(".intel_syntax noprefix\n");
+
+  // encode all literal first in data segment
+  for (LiteralList *literal = literals; literal; literal = literal->next) {
+    encode_literal(literal->literal);  
+  }
+
+  for (Program *prog = program; prog; prog = prog->next) {
+    if(prog->gvar) {
+      gen_gvar(prog->gvar);
+      continue; 
+    }
+  }
 
   for (Program *prog = program; prog; prog = prog->next) {
     if (prog->func) {
       gen_func(prog->func);
       continue;
-    } else if(prog->gvar) {
-      gen_gvar(prog->gvar);
-      continue; 
     }
   }
 }

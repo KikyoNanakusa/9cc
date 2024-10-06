@@ -49,6 +49,11 @@ int get_size(Node *node) {
     return 8;
   }
 
+  if (node->kind == ND_LITERAL) {
+    // Because of zero byte( end of string), add 1;
+    return strlen(node->literal->string)+1;
+  }
+
   if (node->kind == ND_DEREF) {
     if (node->lhs->kind == ND_PTR_ADD || node->lhs->kind == ND_PTR_SUB) {
       if (is_array(node->lhs->lhs)) {
@@ -88,7 +93,7 @@ char consume_char_literal() {
   }
 }
 
-char *consume_multi_char_literal() {
+char *consume_string_literal() {
   Token *tok = consume_ident();
   if (tok) {
     char *c = strndup(tok->str, tok->len);
@@ -559,13 +564,21 @@ Node *primary() {
   }
 
   if (consume("\"")) {
-    char *c = consume_multi_char_literal();
+    char *c = consume_string_literal();
     expect("\"");
     Literal *literal = push_literal(c);
 
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LITERAL;
     node->literal = literal;
+
+    if (consume("[")) {
+      Node *index = expr();
+      Node *ptr_add = new_node(ND_PTR_ADD, node, index);
+      node = new_node(ND_DEREF, ptr_add, NULL);
+      expect("]");
+      return node;
+    }
 
     return node;
   }

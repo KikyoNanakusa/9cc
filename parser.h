@@ -61,7 +61,7 @@ typedef struct Literal Literal;
 struct Literal {
   char *string;
   int len; 
-  char *label;
+  int labelseq;
 };
 
 typedef struct LiteralList LiteralList;
@@ -132,4 +132,8 @@ bool is_array(Node *node);
 bool is_function();
 Node *parse_deref(Node *node);
 int get_size(Node *node);
+
+extern LiteralList *literals;
 #endif 
+
+
