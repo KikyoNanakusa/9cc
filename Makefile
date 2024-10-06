@@ -21,5 +21,6 @@ test: $(TARGET)
 
 clean:
 	rm -f $(TARGET) *.o *~ tmp*
+	rm -f ./test_cases/test.c
 
 .PHONY: test clean
