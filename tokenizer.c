@@ -44,6 +44,26 @@ Token *tokenize(char *p) {
 			continue;
 		}
 
+    // Line Comment
+    if (strncmp(p, "//", 2) == 0) {
+      p += 2;
+      while (*p != '\n') {
+        p++;
+      }
+      continue;
+    }
+
+    // Block Comment
+    if (strncmp(p, "/*", 2) == 0) {
+      char *q = strstr(p + 2, "*/");
+      if (!q) {
+        error_at(p, "Comment is not closed");
+      }
+
+      p = q + 2;
+      continue;
+    }
+
     if (startswith(p, "sizeof")) {
       cur = new_token(TK_SIZEOF, cur, p, strlen("sizeof"));
       p += strlen("sizeof");

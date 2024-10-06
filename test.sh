@@ -27,6 +27,16 @@ assert() {
   fi
 }
 
+assert 0 "// test comment 
+          int main() { return 0; }"
+
+assert 0 "/* aaaa
+bbbb
+cccc
+dddd
+*/  
+int main() { return 0; }"
+
 assert 0 "char *c = \"aaa\"; int main() { return 0; }"
 assert 97 "char *c = \"abc\"; int main() { return c[0]; }"
 assert 98 "char *c = \"abc\"; int main() { return c[1]; }"
