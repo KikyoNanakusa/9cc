@@ -23,8 +23,12 @@ bool is_alpha(char c) {
   return ('a' <= c && c <='z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
+bool is_simbol(char c) {
+  return c == '_';
+}
+
 bool is_alpha_num(char c) {
-  return is_alpha(c) || ('0' <= c && c <= '9');
+  return is_alpha(c) || ('0' <= c && c <= '9') || is_simbol(c);
 }
 
 // Tokenize the input p and return it.
@@ -94,7 +98,7 @@ Token *tokenize(char *p) {
       continue;
     }
 
-		if (strchr("+-*/=;()<>{},&[]", *p)) {
+		if (strchr("+-*/=;()<>{},&[]'", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}

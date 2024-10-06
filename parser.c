@@ -72,6 +72,20 @@ int get_size(Node *node) {
   return node->var->type->size;
 }
 
+char consume_char_literal() {
+  Token *tok = consume_ident();
+  if(tok) {
+    if(tok->len != 1) {
+      error_at(tok->str, "Character literal should contain only one character");
+    }
+
+    char c = tok->str[0];
+    return c;
+  } else {
+    error("Empty char constant");
+  }
+}
+
 // Create a new node
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
@@ -353,7 +367,14 @@ Node *global_variable(Type *type) {
   }
 
   expect("=");
-  int init_val = expect_number();
+  int init_val = 0;
+  if (consume("'")) {
+    char c = consume_char_literal();
+    init_val = (int) c;
+    expect("'");
+  } else {
+    init_val = expect_number();
+  }
   expect(";");
 
   Node *node = calloc(1, sizeof(Node));
@@ -498,11 +519,19 @@ Node *func_args() {
   return head;
 }
 
+
 Node *primary() {
   if (consume("(")) {
     Node *node = expr();
     expect(")");
     return node;
+  }
+
+  // single character literal will be replaced to num node;
+  if (consume("'")) {
+    char c = consume_char_literal();
+    expect("'");
+    return new_node_num( (int) c);
   }
 
   Token *tok = consume_ident();
