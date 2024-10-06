@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "parser.h"
 #include "codegen.h"
+#include "file_reader.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -11,7 +12,8 @@
 
 
 Token *token;
-char *user_input;
+char *file_path;
+char *source_code;
 
 
 int main(int argc, char **argv) {
@@ -21,8 +23,9 @@ int main(int argc, char **argv) {
 	}
 
   // Tokenize
-  user_input = argv[1];
-	token = tokenize(user_input);
+  file_path = argv[1];
+  source_code = read_source_file(file_path);
+	token = tokenize(source_code);
 
   // Create AST
   Program *prog = program();

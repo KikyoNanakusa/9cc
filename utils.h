@@ -10,7 +10,7 @@
 #include "parser.h"
 
 void error(char *fmt, ...);
-void error_at(char *loc, char *fmt, ...);
+void error_at(char *loc, char *msg); 
 
 char *strndup(const char *s, size_t n);
 size_t strnlen(const char *s, size_t maxlen);

@@ -177,7 +177,10 @@ void expect(char *op) {
       strlen(op) != token->len ||
       memcmp(token->str, op, token->len))
   {
-		error_at(token->str, "expected '%c'", op);
+    //TODO: refactor buffer
+    char error_msg[100];
+    snprintf(error_msg, sizeof(error_msg), "expected '%s'", op);
+		error_at(token->str, error_msg);
 	}
 	token = token->next;
 }
