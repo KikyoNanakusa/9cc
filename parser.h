@@ -37,6 +37,7 @@ typedef enum {
   ND_PTR_SUB,
   ND_GVAR,
   ND_LITERAL,
+  ND_INIT_LIST,
 } NodeKind;
 
 
@@ -95,6 +96,7 @@ struct Node {
   Literal *init_literal; // used only if kind is ND_GVAR
                   
   Literal *literal;  // used only if kind is ND_LITERAL
+  Node *init_list; // used only if kind is ND_INIT_LIST
 };
 
 typedef struct Function Function;
@@ -128,10 +130,12 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+int count_array_initializer_elements(Node *node);
 bool is_ptr(Node *node);
 bool is_array(Node *node);
 bool is_function();
 Node *parse_deref(Node *node);
+Node *array_initializer();
 int get_size(Node *node);
 
 extern LiteralList *literals;

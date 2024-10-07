@@ -194,12 +194,69 @@ Node *expr() {
   return assign();
 }
 
+Node *array_initializer() {
+  if (!consume("{")) {
+    return NULL;    
+  }
+  Node *initializer_list = NULL;
+  Node *cur = NULL;
+
+  while (true) {
+    Node *new_node = expr();  
+
+    if (!initializer_list) {
+      initializer_list = new_node;
+      cur = initializer_list;
+    } else {
+      cur->next = new_node;
+      cur = cur->next;
+    }
+
+    if (consume(",")) {
+      continue;
+    }
+
+    if (consume("}")) {
+      break;
+    }
+
+    error_at(token->str, "Expected ',' or '}'");
+  }
+
+  return initializer_list;
+}
+
+int count_array_initializer_elements(Node *init_list) {
+  int count = 0;
+  Node *cur = init_list;
+  
+  while (cur) {
+    count++;
+    cur = cur->next;
+  }
+
+  return count;
+}
+
 Node *declaration(Type *type) {
   char *name = expect_ident();
+  bool is_incomplete_array = false;
+
   if (consume("[")) {
-    int array_size = expect_number();
+
+    Token *tok = consume_number();
+    int array_size = 0;
+    if (tok) {
+      array_size = tok->val;
+    } else {
+      is_incomplete_array = true;
+    }
+
     expect("]");
-    type = array_of(type, array_size);
+
+    if (!is_incomplete_array && array_size != 0) {
+      type = array_of(type, array_size);
+    }
   }
 
   LVar *var = push_lvar(name, type);
@@ -212,11 +269,32 @@ Node *declaration(Type *type) {
 
   expect("=");
 
+  // Array initialization
+  Node *array_initializer_list = array_initializer();
+  if (is_incomplete_array) {
+    int array_size = count_array_initializer_elements(array_initializer_list);
+    type = array_of(type, array_size);
+    var->type = type;
+  }
+
+
+  Node *init_list_node = NULL;
+  if (array_initializer_list) {
+    init_list_node = calloc(1, sizeof(Node));
+    init_list_node->kind = ND_INIT_LIST;
+    init_list_node->init_list = array_initializer_list;
+  }
+
   Node *lhs = calloc(1, sizeof(Node));
   lhs->kind = ND_LVAR;
   lhs->var = var;
 
-  Node *rhs = expr();
+  Node *rhs = NULL;
+  if (init_list_node) {
+    rhs = init_list_node;
+  } else {
+    rhs = expr();
+  }
 
   expect(";");
   Node *node = new_node(ND_ASSIGN, lhs, rhs);

@@ -27,6 +27,16 @@ assert() {
   fi
 }
 
+assert 0 "int main() { int a[] = {1, 2, 3}; return 0; }"
+assert 1 "int main() { int a[] = { 1, 2, 3 }; return a[0]; }"
+assert 2 "int main() { int a[] = { 1, 2, 3 }; return a[1]; }"
+assert 3 "int main() { int a[] = { 1, 2, 3 }; return a[2]; }"
+
+assert 0 "int main() { int a[3] = { 1, 2, 3 }; return 0; }"
+assert 1 "int main() { int a[3] = { 1, 2, 3 }; return a[0]; }"
+assert 2 "int main() { int a[3] = { 1, 2, 3 }; return a[1]; }"
+assert 3 "int main() { int a[3] = { 1, 2, 3 }; return a[2]; }"
+
 assert 0 "// test comment 
           int main() { return 0; }"
 

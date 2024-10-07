@@ -180,6 +180,15 @@ Token *consume_ident() {
   return tok;
 }
 
+Token *consume_number() {
+	if (token->kind != TK_NUM) {
+	  return NULL;	
+	}
+  Token *tok = token;
+	token = token->next;
+	return tok;
+}
+
 Token *consume_sizeof() {
   if (token->kind != TK_SIZEOF) {
     return NULL;
