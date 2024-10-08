@@ -27,6 +27,9 @@ assert() {
   fi
 }
 
+assert 0 "char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; int main() { return 0; }"
+assert 97 "char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; int main() { char *b = a[0]; return b[0]; }"
+
 assert 0 "int a[] = {1, 2, 3}; int main() { return 0; }"
 assert 1 "int a[] = {1, 2, 3}; int main() { return a[0]; }"
 assert 2 "int a[] = {1, 2, 3}; int main() { return a[1]; }"
