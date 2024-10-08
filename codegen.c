@@ -324,7 +324,7 @@ void gen(Node *node) {
 }
 
 void gen_func(Function *fn) {
-  printf("  .global %s\n", fn->name);
+  printf("  .globl %s\n", fn->name);
   printf("  .text\n");
   printf("%s:\n", fn->name);
   funcname = fn->name;
@@ -360,7 +360,7 @@ void gen_func(Function *fn) {
 
 void gen_gvar(Node *node) {
   printf("  .data\n");
-  printf("  .global %s\n", node->var->name);
+  printf("  .globl %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
   if (node->list_element) {
