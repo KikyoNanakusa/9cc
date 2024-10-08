@@ -363,7 +363,23 @@ void gen_gvar(Node *node) {
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
-  if (node->init_literal != NULL) {
+  if (node->list_element) {
+    ListElement *element = node->list_element;
+    while(element) {
+      if(element->kind == LE_NUM) {
+        printf("  .long %d\n", element->val);
+      } else if(element->kind == LE_CHAR) {
+        printf("  .byte %d\n", element->val);
+      } else if(element->kind == LE_STRING) {
+        printf("  .quad .LC%d\n", element->literal->labelseq);
+      }
+      element = element->next;
+    }
+    
+    return;
+  }
+
+  if (node->init_literal) {
     printf("  .quad .LC%d\n", node->init_literal->labelseq);
     return;
   }

@@ -40,6 +40,11 @@ typedef enum {
   ND_INIT_LIST,
 } NodeKind;
 
+typedef enum {
+  LE_NUM,
+  LE_CHAR,
+  LE_STRING,
+} ListElementKind;
 
 typedef struct Node Node;
 
@@ -71,6 +76,15 @@ struct LiteralList {
   Literal *literal;
 };
 
+
+typedef struct ListElement ListElement;
+struct ListElement {
+  ListElementKind kind;
+  int val;
+  Literal *literal;
+  ListElement *next;
+};
+
 // Node type of AST
 struct Node {
   NodeKind kind;
@@ -94,9 +108,11 @@ struct Node {
                   //
   int init_val;   // used only if kind is ND_GVAR
   Literal *init_literal; // used only if kind is ND_GVAR
+  ListElement *list_element; // used only if kind is ND_GVAR
                   
   Literal *literal;  // used only if kind is ND_LITERAL
   Node *init_list; // used only if kind is ND_INIT_LIST
+                   //
 };
 
 typedef struct Function Function;
