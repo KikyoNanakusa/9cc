@@ -101,6 +101,31 @@ void gen_glval(Node *node) {
   return;
 }
 
+void gen_init_list(Node *node) {
+  if (node->rhs->init_list) {
+    Node *init_list_node = node->rhs->init_list;
+    int offset = 0;
+    int size = node->lhs->var->type->ptr_to->size;
+
+    for (Node *element = init_list_node; element; element = element->next) {
+      gen_lval(node->lhs);
+      printf("  pop rax\n");
+      printf("  add rax, %d\n", offset);
+      printf("  push rax\n");
+
+      gen(element);
+
+      printf("  pop rdi\n");
+      printf("  pop rax\n");
+      gen_store(node->lhs);
+
+      offset += size;
+    }
+  } else {
+    error("cannot initialize array");
+  }
+}
+
 // Generate assembly code
 void gen(Node *node) {
   switch (node->kind) {
@@ -114,6 +139,12 @@ void gen(Node *node) {
       }
       return;
     case ND_ASSIGN:
+      // list initializer (int a[3] = {1, 2, 3})
+      if (node->rhs->kind == ND_INIT_LIST) {
+        gen_init_list(node);
+        return;
+      }
+
       gen_lval(node->lhs);
       gen(node->rhs);
 
@@ -332,7 +363,23 @@ void gen_gvar(Node *node) {
   printf("  .global %s\n", node->var->name);
   printf("%s:\n", node->var->name);
 
-  if (node->init_literal != NULL) {
+  if (node->list_element) {
+    ListElement *element = node->list_element;
+    while(element) {
+      if(element->kind == LE_NUM) {
+        printf("  .long %d\n", element->val);
+      } else if(element->kind == LE_CHAR) {
+        printf("  .byte %d\n", element->val);
+      } else if(element->kind == LE_STRING) {
+        printf("  .quad .LC%d\n", element->literal->labelseq);
+      }
+      element = element->next;
+    }
+    
+    return;
+  }
+
+  if (node->init_literal) {
     printf("  .quad .LC%d\n", node->init_literal->labelseq);
     return;
   }

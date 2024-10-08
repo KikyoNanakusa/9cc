@@ -27,6 +27,35 @@ assert() {
   fi
 }
 
+assert 0 "char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; int main() { return 0; }"
+assert 97 "char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; int main() { char *b = a[0]; return b[0]; }"
+
+assert 0 "int a[] = {1, 2, 3}; int main() { return 0; }"
+assert 1 "int a[] = {1, 2, 3}; int main() { return a[0]; }"
+assert 2 "int a[] = {1, 2, 3}; int main() { return a[1]; }"
+assert 3 "int a[] = {1, 2, 3}; int main() { return a[2]; }"
+
+assert 97 "char a[] = {'a', 'b', 'c'}; char main() { return a[0]; }"
+assert 98 "char a[] = {'a', 'b', 'c'}; char main() { return a[1]; }"
+assert 99 "char a[] = {'a', 'b', 'c'}; char main() { return a[2]; }"
+
+assert 0 "int main() { char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; return 0; }"
+assert 97 "int main() { char *a[] = {\"aaa\", \"bbb\", \"ccc\" }; char *b = a[0]; return b[0]; }"
+
+assert 97 "int main() { char a[] = {'a', 'b', 'c'}; return a[0]; }"
+assert 98 "int main() { char a[] = {'a', 'b', 'c'}; return a[1]; }"
+assert 99 "int main() { char a[] = {'a', 'b', 'c'}; return a[2]; }"
+
+assert 0 "int main() { int a[] = {1, 2, 3}; return 0; }"
+assert 1 "int main() { int a[] = { 1, 2, 3 }; return a[0]; }"
+assert 2 "int main() { int a[] = { 1, 2, 3 }; return a[1]; }"
+assert 3 "int main() { int a[] = { 1, 2, 3 }; return a[2]; }"
+
+assert 0 "int main() { int a[3] = { 1, 2, 3 }; return 0; }"
+assert 1 "int main() { int a[3] = { 1, 2, 3 }; return a[0]; }"
+assert 2 "int main() { int a[3] = { 1, 2, 3 }; return a[1]; }"
+assert 3 "int main() { int a[3] = { 1, 2, 3 }; return a[2]; }"
+
 assert 0 "// test comment 
           int main() { return 0; }"
 

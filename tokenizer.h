@@ -30,6 +30,7 @@ bool consume(char *op);
 Token *consume_return();
 Token *consume_ident();
 Token *consume_sizeof();
+Token *consume_number();
 void expect(char *op);
 char *expect_basetype();
 int expect_number();

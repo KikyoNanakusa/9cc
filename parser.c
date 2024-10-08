@@ -194,12 +194,69 @@ Node *expr() {
   return assign();
 }
 
+Node *array_initializer() {
+  if (!consume("{")) {
+    return NULL;    
+  }
+  Node *initializer_list = NULL;
+  Node *cur = NULL;
+
+  while (true) {
+    Node *new_node = expr();  
+
+    if (!initializer_list) {
+      initializer_list = new_node;
+      cur = initializer_list;
+    } else {
+      cur->next = new_node;
+      cur = cur->next;
+    }
+
+    if (consume(",")) {
+      continue;
+    }
+
+    if (consume("}")) {
+      break;
+    }
+
+    error_at(token->str, "Expected ',' or '}'");
+  }
+
+  return initializer_list;
+}
+
+int count_array_initializer_elements(Node *init_list) {
+  int count = 0;
+  Node *cur = init_list;
+  
+  while (cur) {
+    count++;
+    cur = cur->next;
+  }
+
+  return count;
+}
+
 Node *declaration(Type *type) {
   char *name = expect_ident();
+  bool is_incomplete_array = false;
+
   if (consume("[")) {
-    int array_size = expect_number();
+
+    Token *tok = consume_number();
+    int array_size = 0;
+    if (tok) {
+      array_size = tok->val;
+    } else {
+      is_incomplete_array = true;
+    }
+
     expect("]");
-    type = array_of(type, array_size);
+
+    if (!is_incomplete_array && array_size != 0) {
+      type = array_of(type, array_size);
+    }
   }
 
   LVar *var = push_lvar(name, type);
@@ -212,11 +269,32 @@ Node *declaration(Type *type) {
 
   expect("=");
 
+  // Array initialization
+  Node *array_initializer_list = array_initializer();
+  if (is_incomplete_array) {
+    int array_size = count_array_initializer_elements(array_initializer_list);
+    type = array_of(type, array_size);
+    var->type = type;
+  }
+
+
+  Node *init_list_node = NULL;
+  if (array_initializer_list) {
+    init_list_node = calloc(1, sizeof(Node));
+    init_list_node->kind = ND_INIT_LIST;
+    init_list_node->init_list = array_initializer_list;
+  }
+
   Node *lhs = calloc(1, sizeof(Node));
   lhs->kind = ND_LVAR;
   lhs->var = var;
 
-  Node *rhs = expr();
+  Node *rhs = NULL;
+  if (init_list_node) {
+    rhs = init_list_node;
+  } else {
+    rhs = expr();
+  }
 
   expect(";");
   Node *node = new_node(ND_ASSIGN, lhs, rhs);
@@ -264,7 +342,7 @@ Node *stmt() {
   }
 
   if (consume("for")) {
-    node = calloc(1, sizeof(Node));
+    node = calloc(1, sizeof(Node));  
     node->kind = ND_FOR;
 
     expect("(");
@@ -371,28 +449,93 @@ Program *program() {
 
 Node *global_variable(Type *type) {
   char *name = expect_ident();
+  bool is_incomplete_array = false;
+
   if (consume("[")) {
-    int array_size = expect_number();
+
+    Token *tok = consume_number();
+    int list_size = 0;
+    if (tok) {
+      list_size = tok->val;
+    } else {
+      is_incomplete_array = true;
+    }
+
     expect("]");
-    type = array_of(type, array_size);
+
+    if (!is_incomplete_array) {
+      type = array_of(type, list_size);
+    }
+
+    ListElement *initializer_list = NULL;
+    if (consume("=")) {
+
+      if (!consume("{")) {
+        return NULL;    
+      }
+
+      ListElement *cur = NULL;
+      int initializer_list_size = 0;
+      while (true) {
+        ListElement *element = calloc(1, sizeof(ListElement));
+        initializer_list_size++;
+
+        if (consume("'")) {
+          char c = consume_char_literal();
+          element->kind = LE_CHAR;
+          element->val = (int) c;
+          expect("'");
+        } else if (consume("\"")) {
+          char *c = consume_string_literal();
+          expect("\"");
+          Literal *init_literal = push_literal(c);
+          element->kind = LE_STRING;
+          element->literal = init_literal;
+        } else {
+          int init_val = expect_number();
+          element->kind = LE_NUM;
+          element->val = init_val;
+        }
+
+        if (!initializer_list) {
+          initializer_list = element;
+          cur = initializer_list;
+        } else {
+          cur->next = element;
+          cur = cur->next;
+        }
+
+        if (consume(",")) {
+          continue;
+        }
+
+        if (consume("}")) {
+          break;
+        }
+
+        error_at(token->str, "Expected ',' or '}'");
+      }
+      type = array_of(type, initializer_list_size);
+    }
+
     expect(";");
 
-    // In this version, gloval array cannot be initialize by the time of declaration
     LVar *var = push_glvar(name, type);
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_GVAR;
     node->var = var;
+    node->list_element = initializer_list;
     return node;
   }
 
   LVar *var = push_glvar(name, type);
 
   if (consume(";")) {
-    Node *null_node = calloc(1, sizeof(Node));
-    null_node->kind = ND_GVAR;
-    null_node->var = var;
-    null_node->init_val = 0;
-    return null_node;
+    Node *declare_node = calloc(1, sizeof(Node));
+    declare_node->kind = ND_GVAR;
+    declare_node->var = var;
+    declare_node->init_val = 0;
+    return declare_node;
   }
 
   expect("=");
